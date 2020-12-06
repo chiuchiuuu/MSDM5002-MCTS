@@ -4,6 +4,7 @@ from gui import *
 from MCTS import *
 from setting import *
 
+print("helloworld")
 
 def check_for_done(mat):
     """
@@ -29,6 +30,7 @@ def update_by_pc(mat):
     """
     # return mat
     pass
+
 
 def main():
     
