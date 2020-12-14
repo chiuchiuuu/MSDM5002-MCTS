@@ -16,7 +16,3 @@ pip install pygame
 # for mainland china
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pygame
 ```
-
-
-
-[chiuchiuuu/MSDM5002-MCTS: Final project of the course MSDM5002 (github.com)](https://github.com/chiuchiuuu/MSDM5002-MCTS)
