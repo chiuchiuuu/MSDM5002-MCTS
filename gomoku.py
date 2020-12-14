@@ -3,7 +3,7 @@ import numpy as np
 import pygame
 from setting import *
 import copy
-from MentecarloTreeSearch import MentecarloTreeSearch, win_condition
+from MentecarloTreeSearch import MentecarloTreeSearch
 from Node import Node
 
 class Gomoku:
