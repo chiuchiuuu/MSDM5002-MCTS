@@ -1,8 +1,9 @@
+import time
 import numpy as np
 import pygame
-from MCTS import *
+from MonteCarloTreeNode import MonteCarloTreeNode
+from MonteCarloTreeSearch import MonteCarloTreeSearch
 from setting import *
-import time
 
 class Gomoku:
 
@@ -56,6 +57,25 @@ class Gomoku:
         self.mat[row[idx], col[idx]] = -1
         pass
 
+    # def update_by_man(self):
+    #     """
+    #     This function detects the mouse click on the game window. Update the state matrix of the game. 
+    #     input: 
+    #         event:pygame event, which are either quit or mouse click)
+    #         mat: 2D matrix represents the state of the game
+    #     output:
+    #         mat: updated matrix
+    #     """
+    #     done=False
+    #     if event.type==pygame.QUIT:
+    #         done=True
+    #     if event.type==pygame.MOUSEBUTTONDOWN:
+    #         (x,y)=event.pos
+    #         row = round((y - 40) / 40)     
+    #         col = round((x - 40) / 40)
+    #         mat[row][col]=1
+    #     return mat, done
+
     def run(self):
         while not self.done:
             for event in pygame.event.get():
@@ -68,13 +88,13 @@ class Gomoku:
                     col = round((x - 40) / d)
                     self.mat[row][col]=1
                     self.render()
-                    # check for win or tie
+                     # check for win or tie
                     # print message if game finished
                     # otherwise contibue
                     
                     
                     #get the next move from computer/MCTS
-                    time.sleep(1)
+                    time.sleep(0.3)
                     self._update_by_pc()
                     self.render()
                     # check for win or tie
@@ -134,8 +154,6 @@ class Gomoku:
                     pos = [40+d* j , 40+d * i]
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
 
-
-    
 if __name__ == '__main__':
     gomoku = Gomoku(8)
     gomoku.run()
