@@ -13,13 +13,25 @@ class MentecarloTreeSearch():
     def expand_node(self, node):
         mat = copy.deepcopy(node.state)
         child_node_player = node.player * (-1)
-        expand_node_num = 10 # 以后加入init (?
         row, col = np.where(mat == 0)
-        child_nd = random.sample(list(range(len(row))), expand_node_num)
+        #child_nd = random.sample(list(range(len(row))), len(row))
+        M = mat.shape[0]
+        choice = []
+        for row in range(M):
+            for col in range(M):
+                if mat[row,col] == 0:
+                    around = []
+                    for r in range(row-1,row+2):
+                        for c in range(col-1,col+2):
+                            if r>=0 and r<8 and c>=0 and c<8:
+                                around.append(mat[r,c])
+                    if 1 in around or -1 in around:
+                        choice.append((row,col))
+        child_nd = random.sample(choice,len(choice))
         for child in child_nd:
             mat_tmp = copy.deepcopy(node.state)
-            mat_tmp[row[child]][col[child]] = child_node_player
-            action = {'position': [row[child], col[child]],
+            mat_tmp[child] = child_node_player
+            action = {'position': list(child),
                       'player': child_node_player
                       }
             node.child.append(Node(mat_tmp, node, action, child_node_player, False))
@@ -76,6 +88,8 @@ class MentecarloTreeSearch():
         tmp_player = node.player * (-1)
         while not win:
             row, col = np.where(tmp_mat == 0)
+            if len(row) == 0:
+                break
             idx = np.random.randint(len(row))
             tmp_mat[row[idx], col[idx]] = tmp_player
             pl, win = self.win_condition(tmp_mat)
@@ -85,7 +99,17 @@ class MentecarloTreeSearch():
             tmp_player *= (-1)
         # print(tmp_mat)
         # print(f'win player {pl}')
-        self.back_propagation(node, pl)
+
+        #r, c = np.where(tmp_mat == 0)
+        #remain = len(r)+1
+        if not win:
+            value = 0
+            pl = node.player
+        elif pl == node.player:
+            value = 1.0
+        else:
+            value = 100.0
+        self.back_propagation(node, pl, value)
 
     def take_action(self, node):
         win_rate = -1
@@ -97,16 +121,16 @@ class MentecarloTreeSearch():
 
         return best_action
 
-    def back_propagation(self, node, win_player):
+    def back_propagation(self, node, win_player,value):
 
         while node.parent:
             node.visited_count += 1
             if win_player == node.player:
-                node.win_count += 1
+                node.win_count += value
             node = node.parent
 
     def UCT_cal(self, node, total_count):
-        c = 2
+        c = 1
 
         if (node.visited_count == 0) :
             utc_vl = float('inf')
