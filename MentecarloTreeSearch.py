@@ -10,48 +10,28 @@ class MentecarloTreeSearch():
         self.M = M  # length of the chess bored
         self.mat = mat  # board value  initial_value = np.zeros((M,M))
 
-    def expand_node(self, node):
-        mat = copy.deepcopy(node.state)
+    def expand_node(self, node,expand_node_num):
+        t_mat = copy.deepcopy(node.state)
         child_node_player = node.player * (-1)
-        row, col = np.where(mat == 0)
-        #child_nd = random.sample(list(range(len(row))), len(row))
-        M = mat.shape[0]
-        choice = []
-        for row in range(M):
-            for col in range(M):
-                if mat[row,col] == 0:
-                    around = []
-                    for r in range(row-1,row+2):
-                        for c in range(col-1,col+2):
-                            if r>=0 and r<8 and c>=0 and c<8:
-                                around.append(mat[r,c])
-                    if 1 in around or -1 in around:
-                        choice.append((row,col))
-        child_nd = random.sample(choice,len(choice))
+        row, col = np.where(t_mat == 0)
+        child_nd = random.sample(list(range(len(row))), min(expand_node_num - len(node.child), len(row)))
         for child in child_nd:
             mat_tmp = copy.deepcopy(node.state)
-            mat_tmp[child] = child_node_player
-            action = {'position': list(child),
+            mat_tmp[row[child]][col[child]] = child_node_player
+            action = {'position': [row[child], col[child]],
                       'player': child_node_player
                       }
             node.child.append(Node(mat_tmp, node, action, child_node_player, False))
 
+
     def process(self, node):
         if (node.is_root) and (len(node.child) == 0):
-            self.expand_node(node)
+            self.expand_node(node, 40)
         else:
-
-            if (node.visited_count != 0) and (len(node.child) == 0):
-                self.expand_node(node)
+            self.expand_node(node, 20)
 
     def choose_node(self, node):
-        '''
-        choose a node to do simulation
-        '''
 
-        self.process(node)
-
-        # uct_value放在此处 存疑 为何不行
         if len(node.child) != 0:
             best_node = node.child[0]
             uct_value = self.UCT_cal(best_node, node.simulation_count)
@@ -62,24 +42,20 @@ class MentecarloTreeSearch():
                 if tmp_uct > uct_value:
                     best_node = child_node
 
-
-            return self.choose_node(best_node)
-        else:
-            return node
+        return best_node
 
     def run(self, node):
-        iter_num = 200 # 每步棋 迭代次数
+        iter_num = 700
+        self.process(node)
         for i in range(iter_num):
-            # print(f'第{i + 1}次模拟，当前的simulation count为{node.simulation_count}')
-            simulation_node = self.choose_node(node)
-            self.simulation(simulation_node)
+            t_best_child = self.choose_node(node)
+            self.simulation(t_best_child)
             node.simulation_count += 1
-            # print('============= ============= ============= =============')
-        action_tmp = self.take_action(node)
+        action_tmp, next_child = self.take_action(node)
         action_position = action_tmp['position']
         player = action_tmp['player']
 
-        return action_position, player
+        return action_position, player, next_child
 
     def simulation(self, node):
         tmp_mat = copy.deepcopy(node.state)
@@ -87,50 +63,49 @@ class MentecarloTreeSearch():
 
         tmp_player = node.player * (-1)
         while not win:
+            tmp_mat = copy.deepcopy(node.state)
+            tmp_player = node.player * (-1)
+
             row, col = np.where(tmp_mat == 0)
-            if len(row) == 0:
-                break
             idx = np.random.randint(len(row))
             tmp_mat[row[idx], col[idx]] = tmp_player
             pl, win = self.win_condition(tmp_mat)
 
-            if len(row) == 1:
+            if win:
+                self.back_propagation(node, pl)
+            elif len(row) == 1:
+                self.back_propagation(node, pl)
                 break
-            tmp_player *= (-1)
-        # print(tmp_mat)
-        # print(f'win player {pl}')
-
-        #r, c = np.where(tmp_mat == 0)
-        #remain = len(r)+1
-        if not win:
-            value = 0
-            pl = node.player
-        elif pl == node.player:
-            value = 1.0
-        else:
-            value = 100.0
-        self.back_propagation(node, pl, value)
+            else:
+                action = {'position': [row[idx], col[idx]],
+                          'player': tmp_player
+                          }
+                tmp_node = Node(tmp_mat, node, action, tmp_player, False)
+                node.child.append(tmp_node)
+                node = tmp_node
 
     def take_action(self, node):
         win_rate = -1
         best_action = []
+        best_child = node.child[0]
         for child_node in node.child:
             win_rate_tmp = child_node.win_count / child_node.visited_count if child_node.visited_count != 0 else 0
             if win_rate_tmp > win_rate:
                 best_action = child_node.action
+                best_child = child_node
 
-        return best_action
+        return best_action, best_child
 
-    def back_propagation(self, node, win_player,value):
+    def back_propagation(self, node, win_player):
 
         while node.parent:
             node.visited_count += 1
             if win_player == node.player:
-                node.win_count += value
+                node.win_count += 1
             node = node.parent
 
     def UCT_cal(self, node, total_count):
-        c = 1
+        c = 2
 
         if (node.visited_count == 0) :
             utc_vl = float('inf')

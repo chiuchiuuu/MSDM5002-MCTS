@@ -5,6 +5,7 @@ from setting import *
 import copy
 from MentecarloTreeSearch import MentecarloTreeSearch
 from Node import Node
+# from MCTS import MentecarloTreeSearch
 
 class Gomoku:
 
@@ -21,6 +22,7 @@ class Gomoku:
         self.M = M
         self.mat = np.zeros((M,M))
         self.done = False
+        self.MCTS = MentecarloTreeSearch(False, self.M, self.mat)
 
         # pygame
         pygame.init()
@@ -42,7 +44,7 @@ class Gomoku:
         # return done
         pass
 
-    def _update_by_pc(self):
+    def _update_by_pc(self, node):
         """
         This is the core of the game. Write your code to give the computer the intelligence to play a Five-in-a-Row game 
         with a human
@@ -51,37 +53,16 @@ class Gomoku:
         output:
             2D matrix representing the updated state of the game.
         """
-        # row, col = np.where(self.mat==0)
-        # idx = np.random.randint(len(row))
-        # self.mat[row[idx], col[idx]] = -1
 
         t_mat = copy.deepcopy(self.mat)
-        node_1 = Node(t_mat, False, False, 1, True)
-        MCTS = MentecarloTreeSearch(node_1, self.M, t_mat)
-        action, pl = MCTS.run(node_1)
+        action, pl, next_child = self.MCTS.run(node)
         self.mat[action[0], action[1]] = pl
-        pass
 
-    # def update_by_man(self):
-    #     """
-    #     This function detects the mouse click on the game window. Update the state matrix of the game. 
-    #     input: 
-    #         event:pygame event, which are either quit or mouse click)
-    #         mat: 2D matrix represents the state of the game
-    #     output:
-    #         mat: updated matrix
-    #     """
-    #     done=False
-    #     if event.type==pygame.QUIT:
-    #         done=True
-    #     if event.type==pygame.MOUSEBUTTONDOWN:
-    #         (x,y)=event.pos
-    #         row = round((y - 40) / 40)     
-    #         col = round((x - 40) / 40)
-    #         mat[row][col]=1
-    #     return mat, done
+        return next_child
+
 
     def run(self):
+        run_count = 0
         while not self.done:
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
@@ -92,27 +73,43 @@ class Gomoku:
                     row = round((y - 40) / d)     
                     col = round((x - 40) / d)
                     self.mat[row][col]=1
+                    run_count += 1
                     self.render()
                     win_pl, win = self.win_condition(self.mat)
                     if win:
                         self.done = True
                         break
-                     # check for win or tie
+
+                    if run_count == 1:
+                        tmp_node = Node(self.mat, False, False, 1, True)
+                        self.MCTS.root = tmp_node
+                        self.MCTS.mat = self.mat
+                    else:
+                        new_node = Node(self.mat, tmp_node, [row, col], tmp_node.player * (-1), False)
+                        for child_node in tmp_node.child:
+                            if ((row == child_node.action['position'][0]) and (col == child_node.action['position'][1])):
+                                new_node = child_node
+                                break
+                        tmp_node = new_node
+
+                    # check for win or tie
                     # print message if game finished
                     # otherwise contibue
                     
                     
                     #get the next move from computer/MCTS
                     time.sleep(0.3)
-                    self._update_by_pc()
+                    new_node = self._update_by_pc(tmp_node)
+                    tmp_node = new_node
                     self.render()
+                    run_count += 1
                     win_pl, win = self.win_condition(self.mat)
                     if win:
                         self.done = True
                     # check for win or tie
                     # print message if game finished
                     # otherwise contibue
-
+        print(f'{win_pl} wins!')
         pygame.quit()
 
     def render(self):
