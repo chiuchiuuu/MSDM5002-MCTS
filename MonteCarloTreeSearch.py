@@ -21,6 +21,21 @@ class MonteCarloTreeSearch:
         self.n_iter = n_iter
         self.root = MonteCarloTreeNode(None)
 
+    def update_with_action(self, action):
+        """
+        move to the next node
+
+        Parameters:
+        --------
+        action: (int, int)
+            last action
+        """
+        if action in self.root.child:
+            self.root = self.root.child[action]
+        else:
+            self.root = MonteCarloTreeNode(None)
+
+
     def run(self, state: GomokuGameState):
         """
         run MCTS algorithm
@@ -28,12 +43,6 @@ class MonteCarloTreeSearch:
         Parameters:
         --------
         """
-        # update root node
-        if state.last_action:
-            if state.last_action in self.root.child:
-                self.root = self.root.child[state.last_action]
-            else:
-                self.root = MonteCarloTreeNode(None)
 
         # run simulations
         for _ in range(self.n_iter):

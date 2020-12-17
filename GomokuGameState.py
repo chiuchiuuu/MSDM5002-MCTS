@@ -17,7 +17,7 @@ class GomokuGameState:
             player of  current state
         """
         self.size = size
-        self.board = np.zeros((2, self.size, self.size))
+        self.board = np.zeros((2, self.size, self.size), dtype=int)
         self.players = players
         self.current_player_id = start_player
         self.last_action = None
@@ -57,30 +57,33 @@ class GomokuGameState:
         if self.last_action is None:
             return False
 
-        last_player = 1 - self.current_player_id
-        board = self.board[last_player]
+        last_player_id = 1 - self.current_player_id
+        board = self.board[last_player_id]
 
         i, j = self.last_action
         # check column
         start, end = max(i-4, 0), min(i, self.size-4)
         for k in range(start, end+1):
             if board[k:k+5,j].all():
-                self.winner = last_player
+                self.winner = last_player_id
                 return True
 
         # check rows
         start, end = max(j-4,0), min(j, self.size-4)
         for k in range(start, end+1):
             if board[i, k:k+5].all():
-                self.winner = last_player
+                self.winner = last_player_id
                 return True
 
-        # check upper reverse diagonal
-        if (i+j >= 4) and (i + j < self.size):
-            diag_rev = board[range(i+j,-1,-1),range(0,i+j+1)]
-            for k in range(len(diag_rev)-4):
-                pass
+        # check diagonal
+        if '11111' in ''.join(np.diagonal(board, j-i).astype(str)):
+            self.winner = last_player_id
+            return True
 
+        # check reverse diagonal
+        if '11111' in ''.join(np.fliplr(board).diagonal(self.size-j-i-1).astype(str)):
+            self.winner = last_player_id
+            return True
 
         return False
 

@@ -30,10 +30,10 @@ class MCTSPlayer(GomokuGamePlayer):
         # actions = state.get_legal_action()
         # return tuple(random.choice(actions))
 
-        #self.mcts.update_by_last_player(state)
-
+        self.mcts.update_with_action(state.last_action)
         self.mcts.run(state)
         action = self.mcts.best_action()
+        self.mcts.update_with_action(action)
         return action
 
 class HumanPlayer(GomokuGamePlayer):
