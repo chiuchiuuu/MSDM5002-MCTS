@@ -209,6 +209,6 @@ class Gomoku:
 
         return player, False
 if __name__ == '__main__':
-    gomoku = Gomoku(8)
+    gomoku = Gomoku(6)
     gomoku.run()
 
