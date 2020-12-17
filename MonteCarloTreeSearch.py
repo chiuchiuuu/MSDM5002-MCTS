@@ -3,12 +3,14 @@ import time
 from GomokuGameState import GomokuGameState
 import copy
 import random
+from joblib import Parallel, delayed
+import multiprocessing
 
 class MonteCarloTreeSearch:
     """
 
     """
-    def __init__(self, n_iter):
+    def __init__(self, n_iter=1000, parallel=False):
         """
         initialize a Monte Carlo Tree Search Algorithm
 
@@ -20,6 +22,7 @@ class MonteCarloTreeSearch:
 
         self.n_iter = n_iter
         self.root = MonteCarloTreeNode(None)
+        self.parallel = parallel
 
     def update_with_action(self, action):
         """
@@ -35,6 +38,13 @@ class MonteCarloTreeSearch:
         else:
             self.root = MonteCarloTreeNode(None)
 
+    def _single_run(self, state):
+        state_copy = copy.deepcopy(state)
+
+        # get the node to run the simulation
+        node = self.select_node(state_copy)
+        reward = self.simulate(state_copy)
+        node.backpropagate(reward) 
 
     def run(self, state: GomokuGameState):
         """
@@ -43,15 +53,17 @@ class MonteCarloTreeSearch:
         Parameters:
         --------
         """
+        for _ in range(10):
+            self._single_run(state)
 
         # run simulations
-        for _ in range(self.n_iter):
-            state_copy = copy.deepcopy(state)
-
-            # get the node to run the simulation
-            node = self.select_node(state_copy)
-            reward = self.simulate(state_copy)
-            node.backpropagate(reward) 
+        if self.parallel:
+            num_cores = multiprocessing.cpu_count()
+            Parallel(n_jobs=num_cores)(delayed(self._single_run)(state) for _ in range(self.n_iter-10))
+        else:
+            for _ in range(self.n_iter-10):
+                self._single_run(state)
+        
 
     def select_node(self, state):
         """

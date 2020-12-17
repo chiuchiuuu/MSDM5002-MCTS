@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 class MonteCarloTreeNode:
     """
@@ -35,7 +36,11 @@ class MonteCarloTreeNode:
         if not self._untried_actions:
             self._untried_actions = state.get_legal_action()
 
-        action = self._untried_actions.pop()
+        #action = self._untried_actions.pop()
+
+        action = random.choice(self._untried_actions)
+        self._untried_actions.remove(action)
+
         self.child[action] = MonteCarloTreeNode(self)
         return action, self.child[action]
 

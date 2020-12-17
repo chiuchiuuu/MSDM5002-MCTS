@@ -26,7 +26,7 @@ class Gomoku:
         if self_run:
             players = (MCTSPlayer(), MCTSPlayer())
         else:
-            players = (HumanPlayer(), MCTSPlayer())
+            players = (HumanPlayer(), MCTSPlayer(2000, False))
 
         self.state = GomokuGameState(self.size, players, start_player=0)
 
@@ -78,7 +78,8 @@ class Gomoku:
         """
         d=int(560/(self.size-1))
         black_color = [0, 0, 0]
-        board_color = [ 241, 196, 15]
+        #board_color = [ 241, 196, 15]
+        board_color = [ 255, 217, 47]
         self.screen.fill(board_color)
         for h in range(0, self.size):
             pygame.draw.line(self.screen, black_color,[40, h * d+40], [600, 40+h * d], 1)
@@ -110,5 +111,5 @@ class Gomoku:
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
 
 if __name__ == '__main__':
-    gomoku = Gomoku(8)
+    gomoku = Gomoku(4)
     gomoku.run()

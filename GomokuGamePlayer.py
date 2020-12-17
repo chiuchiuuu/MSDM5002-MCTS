@@ -18,9 +18,9 @@ class GomokuGamePlayer(ABC):
         pass
 
 class MCTSPlayer(GomokuGamePlayer):
-    def __init__(self):
+    def __init__(self, n_iter=200, parallel=False):
         super().__init__()
-        self.mcts = MonteCarloTreeSearch(200)
+        self.mcts = MonteCarloTreeSearch(n_iter, parallel)
 
     def get_action(self, state):
         """

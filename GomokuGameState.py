@@ -25,6 +25,17 @@ class GomokuGameState:
 
         self._legal_actions = list(range(size*size)) # store row-wise as integers
 
+    def __deepcopy__(self, memodict={}):
+        state_copy = GomokuGameState(self.size, self.players)
+
+        state_copy.current_player_id = self.current_player_id
+        state_copy.board = np.copy(self.board)
+        state_copy.last_action = self.last_action
+        state_copy.winner = self.winner
+        state_copy._legal_actions = self._legal_actions.copy()
+        return state_copy
+
+
     def take_action(self, action):
         """
         take action for current state
@@ -62,14 +73,14 @@ class GomokuGameState:
 
         i, j = self.last_action
         # check column
-        start, end = max(i-4, 0), min(i, self.size-4)
+        start, end = max(i-4, 0), min(i, self.size-1-4)
         for k in range(start, end+1):
             if board[k:k+5,j].all():
                 self.winner = last_player_id
                 return True
 
         # check rows
-        start, end = max(j-4,0), min(j, self.size-4)
+        start, end = max(j-4,0), min(j, self.size-1-4)
         for k in range(start, end+1):
             if board[i, k:k+5].all():
                 self.winner = last_player_id
