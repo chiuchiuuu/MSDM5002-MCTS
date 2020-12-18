@@ -10,7 +10,7 @@ from GomokuGamePlayer import MCTSPlayer, HumanPlayer
 
 class Gomoku:
 
-    def __init__(self, size, self_run=False):
+    def __init__(self, size, self_run=False, gui=True):
         """
         initilize gomuku game
 
@@ -21,16 +21,17 @@ class Gomoku:
         """
         self.size = size
         self.self_run = self_run
+        self.gui = gui
 
         # init game
         if self_run:
-            players = (MCTSPlayer(), MCTSPlayer())
+            players = (MCTSPlayer(2000), MCTSPlayer(2000))
         else:
-            players = (HumanPlayer(), MCTSPlayer(2000, False))
+            players = (HumanPlayer(), MCTSPlayer(1000, False))
 
         self.state = GomokuGameState(self.size, players, start_player=0)
 
-        if not self.self_run:
+        if gui:
             # pygame
             pygame.init()
             self.screen = pygame.display.set_mode((640,640))
@@ -48,14 +49,33 @@ class Gomoku:
             action = player.get_action(self.state)
             self.state.take_action(action)
 
-            if not self.self_run:
+            if self.gui:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
                 self.render()
 
         ## handling game end
-        if not self.self_run:
-            if self.state.winner is not None:
-                print(f"winner is {self.state.winner}")
-            pygame.quit()
+        
+        if self.state.winner is not None:
+            message = f"Player {self.state.winner} wins!"
+        else:
+            message = "Draw!"
+
+        if self.gui:
+            font = pygame.font.Font('freesansbold.ttf', 32)
+            text = font.render(message, True, (255, 255, 255), (0, 0, 0))
+            text_rect = text.get_rect()
+            text_rect.center = (320,320)
+            while True:
+                self.screen.blit(text, text_rect)
+                pygame.display.update()
+                for event in pygame.event.get():
+                     if event.type == pygame.MOUSEBUTTONDOWN:
+                         pygame.quit()
+                         return
+        else:
+            print(message)
 
     def render(self):
         """
@@ -111,5 +131,5 @@ class Gomoku:
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
 
 if __name__ == '__main__':
-    gomoku = Gomoku(4)
+    gomoku = Gomoku(size=6, self_run=True, gui=True)
     gomoku.run()
