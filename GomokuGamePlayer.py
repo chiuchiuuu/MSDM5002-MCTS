@@ -35,7 +35,12 @@ class MCTSPlayer(GomokuGamePlayer):
         self.mcts.run(state)
         action = self.mcts.best_action()
         self.mcts.update_with_action(action)
-        return action
+
+        if return_prob:
+            action_prob = self.mcts.get_action_probability()
+            return action, action_prob
+        else:
+            return action
 
 class HumanPlayer(GomokuGamePlayer):
     def __init__(self):
@@ -50,7 +55,7 @@ class HumanPlayer(GomokuGamePlayer):
                 if event.type==pygame.MOUSEBUTTONDOWN:
                     (x,y)=event.pos
                     d=int(560/(state.size-1))
-                    row = round((y - 40) / d)     
+                    row = round((y - 40) / d)
                     col = round((x - 40) / d)
 
                     action = (row, col)

@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 from GomokuGameState import GomokuGameState
 from GomokuGamePlayer import MCTSPlayer, HumanPlayer
 
@@ -72,6 +73,37 @@ class Gomoku:
         else:
             print(message)
 
+
+    def run_self_play(self):
+        """
+        run self-play and get self-play data
+        """
+        boards = []
+        players = []
+        probs = []
+        z = []
+        while not self.state.is_game_over():
+            player = self.state.get_current_player()
+            action, action_prob = player.get_action(self.state, return_prob=True)
+
+            ## store data
+            boards.append(self.state.get_board_under_current_player())
+            players.append(self.state.current_player_id)
+
+            action_id = [ac[0]*self.size+ac[1] for ac in action_prob.keys()]
+            prob = np.zeros(self.size*self.size)
+            prob[action_id] = list(action_prob.values())
+            probs.append(prob)
+
+            self.state.take_action(action)
+
+        z = np.zeros(len(players))
+        if self.state.winner is not None:
+            z[np.array(players) == self.state.winner] = 1
+            z[np.array(players) != self.state.winner] = -1
+        
+        return zip(boards, probs, z)
+
     def render(self):
         """
         Draw the updated game with lines and stones using function draw_board and draw_stone
@@ -126,5 +158,9 @@ class Gomoku:
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
 
 if __name__ == '__main__':
-    gomoku = Gomoku(size=6, self_run=False, gui=True)
-    gomoku.run()
+    gomoku = Gomoku(size=6, self_run=True, gui=False)
+    #gomoku.run()
+
+    results = gomoku.run_self_play()
+    for board, prob, z in results:
+        print(z)

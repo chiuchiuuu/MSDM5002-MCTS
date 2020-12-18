@@ -113,8 +113,6 @@ class MonteCarloTreeNode:
 
         if self.parent:
             self.parent.backpropagate(-reward)
-        
-
 
 class MonteCarloTreeSearch:
     """
@@ -240,7 +238,6 @@ class MonteCarloTreeSearch:
         best action is the action of most visited child node
         """
         return max(self.root.child.items(), key=lambda child: child[1].n_visit)[0]
-        
 
 
 if __name__ == "__main__":

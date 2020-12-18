@@ -49,7 +49,7 @@ class GomokuGameState:
         if self.last_action:
             self.board[self.current_player_id+2] = np.zeros((self.size, self.size))
             self.board[self.current_player_id+2, self.last_action[0], self.last_action[1]] = 1
-        
+
         # change player
         self.current_player_id = 1 - self.current_player_id
         # update last action
@@ -132,3 +132,12 @@ class GomokuGameState:
         board[self.board[0]==1] = 1
         board[self.board[1]==1] = -1
         return board
+
+
+    def get_board_under_current_player(self):
+        """
+        get board data under current player
+        """
+        a, b = self.current_player_id, 1 - self.current_player_id
+        board_cp = self.board[[a,b,a+2,b+2],:,:].copy()
+        return board_cp
