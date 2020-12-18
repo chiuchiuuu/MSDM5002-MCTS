@@ -17,7 +17,7 @@ class GomokuGameState:
             player of  current state
         """
         self.size = size
-        self.board = np.zeros((2, self.size, self.size), dtype=int)
+        self.board = np.zeros((4, self.size, self.size), dtype=int)
         self.players = players
         self.current_player_id = start_player
         self.last_action = None
@@ -45,6 +45,10 @@ class GomokuGameState:
             the location to take place
         """
         self.board[self.current_player_id, action[0], action[1]] = 1
+
+        if self.last_action:
+            self.board[self.current_player_id+2] = np.zeros((self.size, self.size))
+            self.board[self.current_player_id+2, self.last_action[0], self.last_action[1]] = 1
         
         # change player
         self.current_player_id = 1 - self.current_player_id

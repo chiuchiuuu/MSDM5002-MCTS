@@ -150,14 +150,6 @@ class MonteCarloTreeSearch:
             self.root.child[action] = tmp
             self.root = tmp
 
-    def _single_run(self, state):
-        state_copy = copy.deepcopy(state)
-
-        # get the node to run the simulation
-        node = self.select_node(state_copy)
-        reward = self.simulate(state_copy)
-        node.backpropagate(reward) 
-
     def run(self, state: GomokuGameState):
         """
         run MCTS algorithm
@@ -165,17 +157,41 @@ class MonteCarloTreeSearch:
         Parameters:
         --------
         """
-        for _ in range(10):
-            self._single_run(state)
-
         # run simulations
-        if self.parallel:
-            num_cores = multiprocessing.cpu_count()
-            Parallel(n_jobs=num_cores)(delayed(self._single_run)(state) for _ in range(self.n_iter-10))
-        else:
-            for _ in range(self.n_iter-10):
-                self._single_run(state)
-        
+        #if self.parallel:
+        #    num_cores = multiprocessing.cpu_count()
+        #    Parallel(n_jobs=num_cores)(delayed(self._single_run)(state) for _ in range(self.n_iter-10))
+        #else:
+
+        for _ in range(self.n_iter):
+            
+            state_copy = copy.deepcopy(state)
+
+            # get the node to run the simulation
+            node = self.select_node(state_copy)
+            reward = self.simulate(state_copy)
+            node.backpropagate(reward)
+
+    def get_action_probability(self, temp=1):
+        """
+        get the probability for each action of self.root
+
+        Parameters:
+        --------
+        temp: float
+            temperature parameters
+        """
+
+        action_visit = {child[0]:child[1].n_visit for child in self.root.child.items()}
+
+        sum_visit = sum([visit**(1/temp) for visit in action_visit.values()])
+
+        action_prob = action_visit.copy()
+        for action in action_visit:
+            action_prob[action] = (action_visit[action]**(1/temp) / sum_visit)
+
+        return action_prob
+
 
     def select_node(self, state):
         """

@@ -4,7 +4,7 @@ from GomokuGamePlayer import MCTSPlayer, HumanPlayer
 
 class Gomoku:
 
-    def __init__(self, size, self_run=False, gui=True):
+    def __init__(self, size, self_run=False, gui=True, n_iter=500):
         """
         initilize gomuku game
 
@@ -19,9 +19,9 @@ class Gomoku:
 
         # init game
         if self_run:
-            players = (MCTSPlayer(2000), MCTSPlayer(2000))
+            players = (MCTSPlayer(n_iter), MCTSPlayer(n_iter))
         else:
-            players = (HumanPlayer(), MCTSPlayer(5000, False))
+            players = (HumanPlayer(), MCTSPlayer(n_iter, False))
 
         self.state = GomokuGameState(self.size, players, start_player=0)
 
@@ -126,5 +126,5 @@ class Gomoku:
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
 
 if __name__ == '__main__':
-    gomoku = Gomoku(size=6, self_run=True, gui=True)
+    gomoku = Gomoku(size=6, self_run=False, gui=True)
     gomoku.run()

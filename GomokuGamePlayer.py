@@ -23,7 +23,7 @@ class MCTSPlayer(GomokuGamePlayer):
         self.mcts = MonteCarloTreeSearch(n_iter, parallel)
         self.tree = self.mcts.root
 
-    def get_action(self, state):
+    def get_action(self, state, return_prob=False):
         """
         Return an action for the current state
         """
