@@ -17,11 +17,12 @@ class GomokuGameState:
             player of  current state
         """
         self.size = size
-        self.board = np.zeros((4, self.size, self.size), dtype=int)
+        self.board = np.zeros((5, self.size, self.size), dtype=int)
         self.players = players
         self.current_player_id = start_player
         self.last_action = None
         self.winner = None
+        self.last_last_action = None
 
         self._legal_actions = list(range(size*size)) # store row-wise as integers
 
@@ -31,6 +32,7 @@ class GomokuGameState:
         state_copy.current_player_id = self.current_player_id
         state_copy.board = np.copy(self.board)
         state_copy.last_action = self.last_action
+        state_copy.last_last_action = self.last_last_action
         state_copy.winner = self.winner
         state_copy._legal_actions = self._legal_actions.copy()
         return state_copy
@@ -46,13 +48,14 @@ class GomokuGameState:
         """
         self.board[self.current_player_id, action[0], action[1]] = 1
 
-        if self.last_action:
-            self.board[self.current_player_id+2] = np.zeros((self.size, self.size))
-            self.board[self.current_player_id+2, self.last_action[0], self.last_action[1]] = 1
+        if self.last_last_action:
+            self.board[self.current_player_id+2] = 0
+            self.board[self.current_player_id+2, self.last_last_action[0], self.last_last_action[1]] = 1
 
         # change player
         self.current_player_id = 1 - self.current_player_id
         # update last action
+        self.last_last_action = self.last_action
         self.last_action = action
         # remove legal actions
         self._legal_actions.remove(action[0]*self.size+action[1])
@@ -133,11 +136,19 @@ class GomokuGameState:
         board[self.board[1]==1] = -1
         return board
 
+    def view_board(self):
+        board = np.zeros((self.size, self.size),dtype=int).astype(str)
+        board[:,:] = '_'
+        board[self.board[0]==1] = 'x'
+        board[self.board[1]==1] = 'o'
+        return board
+
 
     def get_board_under_current_player(self):
         """
         get board data under current player
         """
         a, b = self.current_player_id, 1 - self.current_player_id
-        board_cp = self.board[[a,b,a+2,b+2],:,:].copy()
+        board_cp = self.board[[a,b,a+2,b+2,4],:,:].copy()
+        board_cp[4] = (self.current_player_id == 0)
         return board_cp

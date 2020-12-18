@@ -62,27 +62,18 @@ class MonteCarloTreeNode:
     #     check if a node is terminal node
     #     """
 
-    def best_child(self, c=1):
+    def best_child(self):
         """
         return the best child of current node
 
         best action is decided by utc funtion
         """
-        return max(self.child.items(), key = lambda child: child[1].uct(c))
-
-    def uniform_random_rollout_policy(self, nodes):
-        """
-        unifrom random roll out policy for the simulation
-
-        Parameters:
-        --------
-        nodes: list
-            list of optional nodes
-        """
-        return np.random.choice(nodes)
+        #tmp = [child.uct() for child in self.child.values()]
+        #print(tmp)
+        return max(self.child.items(), key = lambda child: child[1].uct())
 
 
-    def uct(self, c=np.sqrt(2)):
+    def uct(self, c_puct=np.sqrt(2)):
         """
         Compute the upper confidence bound of current node
 
@@ -91,7 +82,7 @@ class MonteCarloTreeNode:
         c: float
             constant for the UCT function
         """
-        return self._Q() / self._N() + c * np.sqrt(np.log(self.parent._N()) / self._N())
+        return self._Q() / self._N() + c_puct * np.sqrt(np.log(self.parent._N()) / self._N())
 
     def _Q(self):
         """
@@ -118,7 +109,7 @@ class MonteCarloTreeSearch:
     """
 
     """
-    def __init__(self, n_iter=1000, parallel=False):
+    def __init__(self, n_iter=1000, parallel=False, max_time=None):
         """
         initialize a Monte Carlo Tree Search Algorithm
 
@@ -131,6 +122,7 @@ class MonteCarloTreeSearch:
         self.n_iter = n_iter
         self.root = MonteCarloTreeNode(None)
         self.parallel = parallel
+        self.max_time = max_time
 
     def update_with_action(self, action):
         """
@@ -161,14 +153,21 @@ class MonteCarloTreeSearch:
         #    Parallel(n_jobs=num_cores)(delayed(self._single_run)(state) for _ in range(self.n_iter-10))
         #else:
 
-        for _ in range(self.n_iter):
-            
-            state_copy = copy.deepcopy(state)
-
-            # get the node to run the simulation
-            node = self.select_node(state_copy)
-            reward = self.simulate(state_copy)
-            node.backpropagate(reward)
+        if self.max_time:
+            start_time = time.time()
+            while ((time.time()-start_time) < self.max_time):   
+                state_copy = copy.deepcopy(state)
+                # get the node to run the simulation
+                node = self.select_node(state_copy)
+                reward = self.simulate(state_copy)
+                node.backpropagate(reward)
+        else:
+            for _ in range(self.n_iter):
+                state_copy = copy.deepcopy(state)
+                # get the node to run the simulation
+                node = self.select_node(state_copy)
+                reward = self.simulate(state_copy)
+                node.backpropagate(reward)
 
     def get_action_probability(self, temp=1):
         """
@@ -203,7 +202,7 @@ class MonteCarloTreeSearch:
                 state.take_action(action)
                 return node
             else:
-                action, node = current_node.best_child(c=1)
+                action, node = current_node.best_child()
                 state.take_action(action)
                 current_node = node
 
@@ -221,9 +220,12 @@ class MonteCarloTreeSearch:
             action = random.choice(actions)
             state.take_action(action)
 
-        if not state.winner:
+        # if not state.winner
+        if state.winner is None:
+            #print("simulation: draw")
             return 0
         else:
+            #print(f"simulation: {state.winner} wins")
             return 1 if state.winner == player_id else -1
 
     def backpropagate(self, node, winner):

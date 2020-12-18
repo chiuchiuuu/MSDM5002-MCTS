@@ -18,11 +18,11 @@ class GomokuGamePlayer(ABC):
         pass
 
 class MCTSPlayer(GomokuGamePlayer):
-    def __init__(self, n_iter=200, parallel=False):
+    def __init__(self, n_iter=200, parallel=False, max_time=None):
         super().__init__()
-        self.mcts = MonteCarloTreeSearch(n_iter, parallel)
+        self.mcts = MonteCarloTreeSearch(n_iter=n_iter, parallel=parallel, max_time=max_time)
         self.tree = self.mcts.root
-
+        
     def get_action(self, state, return_prob=False):
         """
         Return an action for the current state
@@ -34,10 +34,11 @@ class MCTSPlayer(GomokuGamePlayer):
         self.mcts.update_with_action(state.last_action)
         self.mcts.run(state)
         action = self.mcts.best_action()
+        action_prob = self.mcts.get_action_probability()
+
         self.mcts.update_with_action(action)
 
         if return_prob:
-            action_prob = self.mcts.get_action_probability()
             return action, action_prob
         else:
             return action

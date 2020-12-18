@@ -5,7 +5,7 @@ from GomokuGamePlayer import MCTSPlayer, HumanPlayer
 
 class Gomoku:
 
-    def __init__(self, size, self_run=False, gui=True, n_iter=500):
+    def __init__(self, size, self_run=False, gui=True, n_iter=500, max_time=10):
         """
         initilize gomuku game
 
@@ -20,9 +20,9 @@ class Gomoku:
 
         # init game
         if self_run:
-            players = (MCTSPlayer(n_iter), MCTSPlayer(n_iter))
+            players = (MCTSPlayer(max_time=max_time), MCTSPlayer(max_time=max_time))
         else:
-            players = (HumanPlayer(), MCTSPlayer(n_iter, False))
+            players = (HumanPlayer(), MCTSPlayer(max_time=max_time))
 
         self.state = GomokuGameState(self.size, players, start_player=0)
 
@@ -156,11 +156,12 @@ class Gomoku:
                 elif board[i,j]==-1:
                     pos = [40+d* j , 40+d * i]
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
-
+import random
 if __name__ == '__main__':
-    gomoku = Gomoku(size=6, self_run=True, gui=False)
-    #gomoku.run()
-
-    results = gomoku.run_self_play()
-    for board, prob, z in results:
-        print(z)
+    gomoku = Gomoku(size=6, self_run=False, gui=True, max_time=10)
+    gomoku.run()
+    # random.seed(0)
+    # results = gomoku.run_self_play()
+    # results = list(results)
+    # for board, prob, z in results:
+    #     print(z)
