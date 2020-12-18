@@ -1,16 +1,16 @@
 import time
 import numpy as np
 import pygame
+from MonteCarloTreeNode import MonteCarloTreeNode
+from MonteCarloTreeSearch import MonteCarloTreeSearch
 from setting import *
-import copy
-from MentecarloTreeSearch import MentecarloTreeSearch
-from Node import Node
 
 class Gomoku:
 
     def __init__(self, M):
         """
         initilize gomuku game
+
         Parameters:
         -----------
         M: int
@@ -51,15 +51,10 @@ class Gomoku:
         output:
             2D matrix representing the updated state of the game.
         """
-        # row, col = np.where(self.mat==0)
-        # idx = np.random.randint(len(row))
-        # self.mat[row[idx], col[idx]] = -1
-
-        t_mat = copy.deepcopy(self.mat)
-        node_1 = Node(t_mat, False, False, 1, True)
-        MCTS = MentecarloTreeSearch(node_1, self.M, t_mat)
-        action, pl = MCTS.run(node_1)
-        self.mat[action[0], action[1]] = pl
+        
+        row, col = np.where(self.mat==0)
+        idx = np.random.randint(len(row))
+        self.mat[row[idx], col[idx]] = -1
         pass
 
     # def update_by_man(self):
@@ -93,10 +88,6 @@ class Gomoku:
                     col = round((x - 40) / d)
                     self.mat[row][col]=1
                     self.render()
-                    win_pl, win = self.win_condition(self.mat)
-                    if win:
-                        self.done = True
-                        break
                      # check for win or tie
                     # print message if game finished
                     # otherwise contibue
@@ -106,9 +97,6 @@ class Gomoku:
                     time.sleep(0.3)
                     self._update_by_pc()
                     self.render()
-                    win_pl, win = self.win_condition(self.mat)
-                    if win:
-                        self.done = True
                     # check for win or tie
                     # print message if game finished
                     # otherwise contibue
@@ -166,52 +154,6 @@ class Gomoku:
                     pos = [40+d* j , 40+d * i]
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
 
-    @staticmethod
-    def win_condition(t_mat):
-
-        width, height = t_mat.shape[0], t_mat.shape[1]
-
-        for i in range(0, width):
-            for j in range(0, height):
-                player = int(t_mat[i][j])
-
-                if player != 0:
-                    if i <= width - 1 - 4:
-                        chess_set = set(t_mat[i + k][j] for k in range(0, 5))
-                        # 横右向
-                        if len(chess_set) == 1:
-                            return player, True
-                    if j <= height - 1 - 4:
-                        # 纵下向
-                        chess_set = set(t_mat[i][j + k] for k in range(0, 5))
-                        if len(chess_set) == 1:
-                            return player, True
-                    if (i <= width - 4 - 1) and (j <= height - 4 - 1):
-                        # 右下
-                        chess_set = set(t_mat[i + k][j + k] for k in range(0, 5))
-                        if len(chess_set) == 1:
-                            return player, True
-
-                    if (i <= width - 4 - 1) and (j >= 5):
-                        # 右上
-                        chess_set = set(t_mat[i + k][j - k] for k in range(0, 5))
-                        if len(chess_set) == 1:
-                            return player, True
-
-                    if (i >= 5) and (j >= 5):
-                        # 左上
-                        chess_set = set(t_mat[i - k][j - k] for k in range(0, 5))
-                        if len(chess_set) == 1:
-                            return player, True
-
-                    if (i >= 5) and (j <= height - 4 - 1):
-                        # 左下
-                        chess_set = set(t_mat[i - k][j + k] for k in range(0, 5))
-                        if len(chess_set) == 1:
-                            return player, True
-
-        return player, False
 if __name__ == '__main__':
     gomoku = Gomoku(8)
     gomoku.run()
-
