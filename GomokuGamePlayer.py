@@ -3,7 +3,7 @@ import pygame
 import numpy as np
 import random
 import sys
-from MonteCarloTreeSearch import MonteCarloTreeSearch
+from MCTS import MonteCarloTreeSearch
 
 
 class GomokuGamePlayer(ABC):
@@ -21,6 +21,7 @@ class MCTSPlayer(GomokuGamePlayer):
     def __init__(self, n_iter=200, parallel=False):
         super().__init__()
         self.mcts = MonteCarloTreeSearch(n_iter, parallel)
+        self.tree = self.mcts.root
 
     def get_action(self, state):
         """

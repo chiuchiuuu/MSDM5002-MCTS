@@ -1,11 +1,5 @@
-import time
-import numpy as np
 import pygame
-from MonteCarloTreeNode import MonteCarloTreeNode
-from MonteCarloTreeSearch import MonteCarloTreeSearch
-from setting import *
 from GomokuGameState import GomokuGameState
-
 from GomokuGamePlayer import MCTSPlayer, HumanPlayer
 
 class Gomoku:
@@ -27,7 +21,7 @@ class Gomoku:
         if self_run:
             players = (MCTSPlayer(2000), MCTSPlayer(2000))
         else:
-            players = (HumanPlayer(), MCTSPlayer(1000, False))
+            players = (HumanPlayer(), MCTSPlayer(5000, False))
 
         self.state = GomokuGameState(self.size, players, start_player=0)
 
@@ -53,6 +47,7 @@ class Gomoku:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
+                        return
                 self.render()
 
         ## handling game end
