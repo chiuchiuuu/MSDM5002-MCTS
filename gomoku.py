@@ -1,107 +1,108 @@
-import time
-import numpy as np
 import pygame
-from MonteCarloTreeNode import MonteCarloTreeNode
-from MonteCarloTreeSearch import MonteCarloTreeSearch
-from setting import *
+import numpy as np
+from GomokuGameState import GomokuGameState
+from GomokuGamePlayer import MCTSPlayer, HumanPlayer
 
 class Gomoku:
 
-    def __init__(self, M):
+    def __init__(self, size, self_run=False, gui=True, n_iter=500, max_time=10):
         """
         initilize gomuku game
 
         Parameters:
         -----------
-        M: int
+        size: int
             size of the board
         """
+        self.size = size
+        self.self_run = self_run
+        self.gui = gui
 
-        # game state
-        self.M = M
-        self.mat = np.zeros((M,M))
-        self.done = False
+        # init game
+        if self_run:
+            players = (MCTSPlayer(max_time=max_time), MCTSPlayer(max_time=max_time))
+        else:
+            players = (HumanPlayer(), MCTSPlayer(max_time=max_time))
 
-        # pygame
-        pygame.init()
-        self.screen = pygame.display.set_mode((640,640))
-        pygame.display.set_caption('Five-in-a-Row')
-        self._draw_board()
-        pygame.display.update()
+        self.state = GomokuGameState(self.size, players, start_player=0)
 
-    def _check_for_done(self, i, j):
-        """
-        please write your own code testing if the game is over. Return a boolean variable done. If one of the players wins
-        or the tie happens, return True. Otherwise return False. Print a message about the result of the game.
-        input: 
-            2D matrix representing the state of the game
-        output:
-            none
-        """
-        
-        # return done
-        pass
-
-    def _update_by_pc(self):
-        """
-        This is the core of the game. Write your code to give the computer the intelligence to play a Five-in-a-Row game 
-        with a human
-        input:
-            2D matrix representing the state of the game.
-        output:
-            2D matrix representing the updated state of the game.
-        """
-        
-        row, col = np.where(self.mat==0)
-        idx = np.random.randint(len(row))
-        self.mat[row[idx], col[idx]] = -1
-        pass
-
-    # def update_by_man(self):
-    #     """
-    #     This function detects the mouse click on the game window. Update the state matrix of the game. 
-    #     input: 
-    #         event:pygame event, which are either quit or mouse click)
-    #         mat: 2D matrix represents the state of the game
-    #     output:
-    #         mat: updated matrix
-    #     """
-    #     done=False
-    #     if event.type==pygame.QUIT:
-    #         done=True
-    #     if event.type==pygame.MOUSEBUTTONDOWN:
-    #         (x,y)=event.pos
-    #         row = round((y - 40) / 40)     
-    #         col = round((x - 40) / 40)
-    #         mat[row][col]=1
-    #     return mat, done
+        if gui:
+            # pygame
+            pygame.init()
+            self.screen = pygame.display.set_mode((640,640))
+            pygame.display.set_caption('Five-in-a-Row')
+            self._draw_board()
+            pygame.display.update()
 
     def run(self):
-        while not self.done:
-            for event in pygame.event.get():
-                if event.type==pygame.QUIT:
-                    self.done=True
-                if event.type==pygame.MOUSEBUTTONDOWN:
-                    (x,y)=event.pos
-                    d=int(560/(self.M-1))
-                    row = round((y - 40) / d)     
-                    col = round((x - 40) / d)
-                    self.mat[row][col]=1
-                    self.render()
-                     # check for win or tie
-                    # print message if game finished
-                    # otherwise contibue
-                    
-                    
-                    #get the next move from computer/MCTS
-                    time.sleep(0.3)
-                    self._update_by_pc()
-                    self.render()
-                    # check for win or tie
-                    # print message if game finished
-                    # otherwise contibue
+        """
+        run the Gomoku game
+        """
+        while not self.state.is_game_over():
+            player = self.state.get_current_player()
 
-        pygame.quit()
+            action = player.get_action(self.state)
+            self.state.take_action(action)
+
+            if self.gui:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return
+                self.render()
+
+        ## handling game end
+        
+        if self.state.winner is not None:
+            message = f"Player {self.state.winner} wins!"
+        else:
+            message = "Draw!"
+
+        if self.gui:
+            font = pygame.font.Font('freesansbold.ttf', 32)
+            text = font.render(message, True, (255, 255, 255), (0, 0, 0))
+            text_rect = text.get_rect()
+            text_rect.center = (320,320)
+            while True:
+                self.screen.blit(text, text_rect)
+                pygame.display.update()
+                for event in pygame.event.get():
+                     if event.type == pygame.MOUSEBUTTONDOWN:
+                         pygame.quit()
+                         return
+        else:
+            print(message)
+
+
+    def run_self_play(self):
+        """
+        run self-play and get self-play data
+        """
+        boards = []
+        players = []
+        probs = []
+        z = []
+        while not self.state.is_game_over():
+            player = self.state.get_current_player()
+            action, action_prob = player.get_action(self.state, return_prob=True)
+
+            ## store data
+            boards.append(self.state.get_board_under_current_player())
+            players.append(self.state.current_player_id)
+
+            action_id = [ac[0]*self.size+ac[1] for ac in action_prob.keys()]
+            prob = np.zeros(self.size*self.size)
+            prob[action_id] = list(action_prob.values())
+            probs.append(prob)
+
+            self.state.take_action(action)
+
+        z = np.zeros(len(players))
+        if self.state.winner is not None:
+            z[np.array(players) == self.state.winner] = 1
+            z[np.array(players) != self.state.winner] = -1
+        
+        return zip(boards, probs, z)
 
     def render(self):
         """
@@ -110,12 +111,11 @@ class Gomoku:
             screen: game window, onto which the stones are drawn
             mat: 2D matrix representing the game state
         output:
-            none        
+            none
         """
         self._draw_board()
         self._draw_stone()
         pygame.display.update()
-
 
     def _draw_board(self):    
         """
@@ -123,11 +123,12 @@ class Gomoku:
         input: game windows
         output: none
         """
-        d=int(560/(self.M-1))
+        d=int(560/(self.size-1))
         black_color = [0, 0, 0]
-        board_color = [ 241, 196, 15]
+        #board_color = [ 241, 196, 15]
+        board_color = [ 255, 217, 47]
         self.screen.fill(board_color)
-        for h in range(0, self.M):
+        for h in range(0, self.size):
             pygame.draw.line(self.screen, black_color,[40, h * d+40], [600, 40+h * d], 1)
             pygame.draw.line(self.screen, black_color, [40+d*h, 40], [40+d*h, 600], 1)
 
@@ -143,17 +144,24 @@ class Gomoku:
         """
         black_color = [0, 0, 0]
         white_color = [255, 255, 255]
-        M=len(self.mat)
-        d=int(560/(M-1))
-        for i in range(self.mat.shape[0]):
-            for j in range(self.mat.shape[1]):
-                if self.mat[i,j]==1:
+
+        board = self.state.get_board()
+    
+        d=int(560/(self.size-1))
+        for i in range(board.shape[0]):
+            for j in range(board.shape[1]):
+                if board[i,j]==1:
                     pos = [40+d * j, 40+d* i ]
                     pygame.draw.circle(self.screen, black_color, pos, 18,0)
-                elif self.mat[i,j]==-1:
+                elif board[i,j]==-1:
                     pos = [40+d* j , 40+d * i]
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
-
+import random
 if __name__ == '__main__':
-    gomoku = Gomoku(8)
+    gomoku = Gomoku(size=6, self_run=False, gui=True, max_time=10)
     gomoku.run()
+    # random.seed(0)
+    # results = gomoku.run_self_play()
+    # results = list(results)
+    # for board, prob, z in results:
+    #     print(z)
