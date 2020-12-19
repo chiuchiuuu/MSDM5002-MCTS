@@ -130,8 +130,12 @@ class Gomoku:
         d=int(560/(self.size-1))
         black_color = [0, 0, 0]
         #board_color = [ 241, 196, 15]
-        board_color = [ 255, 217, 47]
+        board_color = [ 238,216,174]
         self.screen.fill(board_color)
+        pygame.draw.circle(self.screen, black_color,(120,120), 6)
+        pygame.draw.circle(self.screen, black_color,(520,520), 6)
+        pygame.draw.circle(self.screen, black_color,(520,120), 6)
+        pygame.draw.circle(self.screen, black_color,(120,520), 6)
         for h in range(0, self.size):
             pygame.draw.line(self.screen, black_color,[40, h * d+40], [600, 40+h * d], 1)
             pygame.draw.line(self.screen, black_color, [40+d*h, 40], [40+d*h, 600], 1)
@@ -163,7 +167,7 @@ class Gomoku:
 
 if __name__ == '__main__':
     # random.seed(0)
-    gomoku = Gomoku(size=6, self_run=False, gui=True, max_time=10)
+    gomoku = Gomoku(size=8, self_run=False, gui=True, max_time=10)
     gomoku.run()
 
     # gomoku = Gomoku(size=6, self_run=True, gui=True, max_time=5)
