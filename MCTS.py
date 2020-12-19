@@ -223,18 +223,28 @@ class MonteCarloTreeSearch:
         select a leaf node for the simulation
         """
         current_node = self.root
-        #while not current_node.is_terminal_node():
-        while not state.is_game_over():
-            if current_node.is_leaf():
-                action, node = current_node.expand(state)
-                state.take_action(action)
-                return node
-            else:
-                action, node = current_node.best_child()
-                state.take_action(action)
-                current_node = node
+        while not current_node.is_leaf():
+            action, current_node = current_node.best_child()
+            state.take_action(action)
 
-        return current_node
+        if state.is_game_over():
+            return current_node
+        else:
+            action, node = current_node.expand(state)
+            state.take_action(action)
+            return node
+
+        # while not state.is_game_over():
+        #     if current_node.is_leaf():
+        #         action, node = current_node.expand(state)
+        #         state.take_action(action)
+        #         return node
+        #     else:
+        #         action, node = current_node.best_child()
+        #         state.take_action(action)
+        #         current_node = node
+
+        # return current_node
 
     def simulate(self, state):
         """
