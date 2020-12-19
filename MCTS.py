@@ -33,10 +33,11 @@ class MonteCarloTreeNode:
         self.n_lose = 0
         self.n_visit = 0
 
-
     def expand(self, state):
         """
         return an unvisited child nodes
+
+        @赵宇恒
         """
         if not self._untried_actions:
             self._untried_actions = state.get_legal_action()
@@ -54,24 +55,22 @@ class MonteCarloTreeNode:
         check if a node is a leaf node
 
         a node is leaf if it is not fully expanded, or exists untried action
+
+        @赵宇恒
         """
         return (self._untried_actions is None) or len(self._untried_actions)
-
-    # def is_terminal_node(self):
-    #     """
-    #     check if a node is terminal node
-    #     """
 
     def best_child(self):
         """
         return the best child of current node
 
         best action is decided by utc funtion
+
+        @星哲
         """
         #tmp = [child.uct() for child in self.child.values()]
         #print(tmp)
         return max(self.child.items(), key = lambda child: child[1].uct())
-
 
     def uct(self, c_puct=np.sqrt(2)):
         """
@@ -81,11 +80,16 @@ class MonteCarloTreeNode:
         --------
         c: float
             constant for the UCT function
+
+        @星哲
         """
         # return self._Q() / self._N() + c_puct * np.sqrt(np.log(self.parent._N()) / self._N())
         return (self.n_win-self.n_lose)/self.n_visit + c_puct * np.sqrt(np.log(self.parent.n_visit) / self.n_visit)
 
     def backpropagate(self, reward):
+        """
+        @兰兰
+        """
         self.n_win += (reward==1)
         self.n_lose += (reward==-1)
         self.n_visit +=1 
@@ -95,7 +99,6 @@ class MonteCarloTreeNode:
 
 class MonteCarloTreeSearch:
     """
-
     """
     def __init__(self, n_iter=20000, parallel=False, max_time=None):
         """
@@ -120,6 +123,8 @@ class MonteCarloTreeSearch:
         --------
         action: (int, int)
             last action
+
+        @凯方
         """
         if action in self.root.child:
             self.root = self.root.child[action]
@@ -134,6 +139,7 @@ class MonteCarloTreeSearch:
 
         Parameters:
         --------
+        @邱世航
         """
         # run simulations
         #if self.parallel:
@@ -146,7 +152,7 @@ class MonteCarloTreeSearch:
             if self.max_time and (time.time() - start_time > self.max_time):
                 print(f"number of iteration: {_}")
                 break
-            
+
             state_copy = copy.deepcopy(state)
             # get the node to run the simulation
             node = self.select_node(state_copy)
@@ -173,10 +179,11 @@ class MonteCarloTreeSearch:
 
         return action_prob
 
-
     def select_node(self, state):
         """
         select a leaf node for the simulation
+
+        @星哲
         """
         current_node = self.root
         while not current_node.is_leaf():
@@ -205,6 +212,8 @@ class MonteCarloTreeSearch:
     def simulate(self, state):
         """
         run single simulation (from node to terminal)
+
+        @凯方
         """
         player_id = 1 - state.current_player_id
         while not state.is_game_over():
@@ -227,6 +236,8 @@ class MonteCarloTreeSearch:
         Get the best action
 
         best action is the action of most visited child node
+
+        @兰兰
         """
         return max(self.root.child.items(), key=lambda child: child[1].n_visit)[0]
 
