@@ -82,20 +82,8 @@ class MonteCarloTreeNode:
         c: float
             constant for the UCT function
         """
-        return self._Q() / self._N() + c_puct * np.sqrt(np.log(self.parent._N()) / self._N())
-
-    def _Q(self):
-        """
-        reward of a node
-        """
-        return self.n_win - self.n_lose
-        # return self.n_win
-
-    def _N(self):
-        """
-        total number of visits
-        """
-        return self.n_visit
+        # return self._Q() / self._N() + c_puct * np.sqrt(np.log(self.parent._N()) / self._N())
+        return (self.n_win-self.n_lose)/self.n_visit + c_puct * np.sqrt(np.log(self.parent.n_visit) / self.n_visit)
 
     def backpropagate(self, reward):
         self.n_win += (reward==1)
@@ -109,7 +97,7 @@ class MonteCarloTreeSearch:
     """
 
     """
-    def __init__(self, n_iter=1000, parallel=False, max_time=None):
+    def __init__(self, n_iter=20000, parallel=False, max_time=None):
         """
         initialize a Monte Carlo Tree Search Algorithm
 
@@ -153,21 +141,16 @@ class MonteCarloTreeSearch:
         #    Parallel(n_jobs=num_cores)(delayed(self._single_run)(state) for _ in range(self.n_iter-10))
         #else:
 
-        if self.max_time:
-            start_time = time.time()
-            while ((time.time()-start_time) < self.max_time):   
-                state_copy = copy.deepcopy(state)
-                # get the node to run the simulation
-                node = self.select_node(state_copy)
-                reward = self.simulate(state_copy)
-                node.backpropagate(reward)
-        else:
-            for _ in range(self.n_iter):
-                state_copy = copy.deepcopy(state)
-                # get the node to run the simulation
-                node = self.select_node(state_copy)
-                reward = self.simulate(state_copy)
-                node.backpropagate(reward)
+        start_time = time.time()
+        for _ in range(self.n_iter):
+            if self.max_time and (time.time() - start_time > self.max_time):
+                print(f"number of iteration: {_}")
+                break
+            state_copy = copy.deepcopy(state)
+            # get the node to run the simulation
+            node = self.select_node(state_copy)
+            reward = self.simulate(state_copy)
+            node.backpropagate(reward)
 
     def get_action_probability(self, temp=1):
         """
@@ -227,11 +210,6 @@ class MonteCarloTreeSearch:
         else:
             #print(f"simulation: {state.winner} wins")
             return 1 if state.winner == player_id else -1
-
-    def backpropagate(self, node, winner):
-        """
-        back propagate the simulation result up to the root node
-        """
 
     def best_action(self):
         """

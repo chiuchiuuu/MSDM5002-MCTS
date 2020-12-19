@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import random
 from GomokuGameState import GomokuGameState
 from GomokuGamePlayer import MCTSPlayer, HumanPlayer
 
@@ -97,6 +98,9 @@ class Gomoku:
 
             self.state.take_action(action)
 
+            if self.gui:
+                self.render()
+
         z = np.zeros(len(players))
         if self.state.winner is not None:
             z[np.array(players) == self.state.winner] = 1
@@ -156,11 +160,13 @@ class Gomoku:
                 elif board[i,j]==-1:
                     pos = [40+d* j , 40+d * i]
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
-import random
+
 if __name__ == '__main__':
+    # random.seed(0)
     gomoku = Gomoku(size=6, self_run=False, gui=True, max_time=10)
     gomoku.run()
-    # random.seed(0)
+
+    # gomoku = Gomoku(size=6, self_run=True, gui=True, max_time=5)
     # results = gomoku.run_self_play()
     # results = list(results)
     # for board, prob, z in results:
