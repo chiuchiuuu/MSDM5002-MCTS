@@ -27,11 +27,15 @@ class MonteCarloTreeNode:
 
         self._untried_actions = None
 
+        
+
 
         # node's statistics
         self.n_win = 0
         self.n_lose = 0
         self.n_visit = 0
+
+        self.prior_prob = 0
 
 
     def expand(self, state):
@@ -72,6 +76,12 @@ class MonteCarloTreeNode:
         #print(tmp)
         return max(self.child.items(), key = lambda child: child[1].uct())
 
+    def best_child_alpha(self):
+        """
+        return the best child by uct_alpha
+        """
+        return max(self.child.items(), key = lambda child: child[1].uct_alpha())
+
 
     def uct(self, c_puct=np.sqrt(2)):
         """
@@ -85,19 +95,26 @@ class MonteCarloTreeNode:
         # return self._Q() / self._N() + c_puct * np.sqrt(np.log(self.parent._N()) / self._N())
         return (self.n_win-self.n_lose)/self.n_visit + c_puct * np.sqrt(np.log(self.parent.n_visit) / self.n_visit)
 
+    def uct_alpha(self, c_puct=np.sqrt(2)):
+        """
+        compute uct function of alpha zero
+        """
+        return (self.n_win-self.n_lose)/self.n_visit + \
+            c_puct * self.prior_prob * np.sqrt(self.parent.n_visit/(1 + self.n_visit))
+
     def backpropagate(self, reward):
         self.n_win += (reward==1)
         self.n_lose += (reward==-1)
-        self.n_visit +=1 
+        self.n_visit += 1
 
         if self.parent:
             self.parent.backpropagate(-reward)
 
 class MonteCarloTreeSearch:
     """
-
+    
     """
-    def __init__(self, n_iter=20000, parallel=False, max_time=None):
+    def __init__(self, n_iter=20000, parallel=False, max_time=None, type="pure"):
         """
         initialize a Monte Carlo Tree Search Algorithm
 
@@ -111,6 +128,9 @@ class MonteCarloTreeSearch:
         self.root = MonteCarloTreeNode(None)
         self.parallel = parallel
         self.max_time = max_time
+
+        self.type = type
+
 
     def update_with_action(self, action):
         """
@@ -141,16 +161,41 @@ class MonteCarloTreeSearch:
         #    Parallel(n_jobs=num_cores)(delayed(self._single_run)(state) for _ in range(self.n_iter-10))
         #else:
 
-        start_time = time.time()
-        for _ in range(self.n_iter):
-            if self.max_time and (time.time() - start_time > self.max_time):
-                print(f"number of iteration: {_}")
-                break
-            state_copy = copy.deepcopy(state)
-            # get the node to run the simulation
-            node = self.select_node(state_copy)
-            reward = self.simulate(state_copy)
-            node.backpropagate(reward)
+        if self.type == 'pure':
+            start_time = time.time()
+            for _ in range(self.n_iter):
+                if self.max_time and (time.time() - start_time > self.max_time):
+                    print(f"number of iteration: {_}")
+                    break
+                state_copy = copy.deepcopy(state)
+                # get the node to run the simulation
+                node = self.select_node(state_copy)
+                reward = self.simulate(state_copy)
+                node.backpropagate(reward)
+            return
+        elif self.type == 'alphazero':
+            start_time = time.time()
+            for _ in range(self.n_iter):
+                state_copy = copy.deepcopy(state)
+                self.playout(state_copy)
+                
+
+                
+    def playout(self, state):
+        """
+        run a single playout for alphazero mcts
+        """
+        node = self.root
+        while not state.is_game_over():
+            
+
+        while not node.is_leaf():
+            action, node = node.best_child_alpha()
+            state.take_action(action)
+        
+        if state.is_game_over():
+
+
 
     def get_action_probability(self, temp=1):
         """
