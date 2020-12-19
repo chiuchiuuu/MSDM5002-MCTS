@@ -18,7 +18,7 @@ class GomokuGamePlayer(ABC):
         pass
 
 class MCTSPlayer(GomokuGamePlayer):
-    def __init__(self, n_iter=200, parallel=False, max_time=None):
+    def __init__(self, n_iter=20000, parallel=False, max_time=None):
         super().__init__()
         self.mcts = MonteCarloTreeSearch(n_iter=n_iter, parallel=parallel, max_time=max_time)
         self.tree = self.mcts.root

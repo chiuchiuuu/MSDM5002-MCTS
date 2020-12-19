@@ -82,26 +82,61 @@ class GomokuGameState:
         # check column
         start, end = max(i-4, 0), min(i, self.size-1-4)
         for k in range(start, end+1):
-            if board[k:k+5,j].all():
+            # if board[k:k+5, j].all():
+            if board[k,j] and board[k+1,j] and board[k+2,j] and board[k+3,j] and board[k+4,j]:
                 self.winner = last_player_id
-                return True
+                return True  
 
         # check rows
         start, end = max(j-4,0), min(j, self.size-1-4)
         for k in range(start, end+1):
-            if board[i, k:k+5].all():
+            # if board[i, k:k+5].all():
+            if board[i,k] and board[i,k+1] and board[i,k+2] and board[i,k+3] and board[i,k+4]:
                 self.winner = last_player_id
                 return True
 
         # check diagonal
-        if '11111' in ''.join(np.diagonal(board, j-i).astype(str)):
-            self.winner = last_player_id
-            return True
+        # if '11111' in ''.join(np.diagonal(board, j-i).astype(str)):
+        #     self.winner = last_player_id
+        #     return True
+        if i <= j:
+            offset = j-i
+            start, end = max(i-4, 0), min(i, self.size-1-4-offset)
+            for k in range(start, end+1):
+                # if board[range(k,k+5), range(k+(j-i),k+(j-i)+5)].all():
+                if board[k,k+offset] and board[k+1,k+1+offset] and board[k+2,k+2+offset] and \
+                    board[k+3,k+3+offset] and  board[k+4, k+4+offset]:
+                    self.winner = last_player_id
+                    return True
+        if i > j:
+            offset = (i-j)
+            start, end = max(j-4, 0), min(j, self.size-1-4-offset)
+            for k in range(start, end+1):
+                # if board[range(k+(i-j),k+(i-j)+5), range(k,k+5)].all():
+                if board[k+offset,k] and board[k+1+offset,k+1] and board[k+2+offset,k+2] and \
+                    board[k+3+offset,k+3] and board[k+4+offset,k+4]:
+                    self.winner = last_player_id
+                    return True
 
         # check reverse diagonal
-        if '11111' in ''.join(np.fliplr(board).diagonal(self.size-j-i-1).astype(str)):
-            self.winner = last_player_id
-            return True
+        # if '11111' in ''.join(np.fliplr(board).diagonal(self.size-j-i-1).astype(str)):
+        #     self.winner = last_player_id
+        #     return True
+
+        if i+j+1>=5 and i + j + 1 <= self.size: # i+j+1 is the size of the reverse diagonal
+            start, end = max(i-4,0), min(i, i+j-4)
+            for k in range(start, end+1):
+                if board[k,i+j-k] and board[k+1,i+j-k-1] and board[k+2,i+j-k-2] and board[k+3,i+j-k-3] \
+                    and board[k+4,i+j-k-4]:
+                    self.winner = last_player_id
+                    return True
+        elif (i + j + 1 > self.size) and (2*self.size-i-j-1 >= 5): # size: self.size-(i+j+1-self.size)
+            start, end = max(i-4, i+j+1-self.size), min(i+4, max(0,self.size-5))
+            for k in range(start, end+1):
+                if board[k,i+j-k] and board[k+1,i+j-k-1] and board[k+2,i+j-k-2] and board[k+3,i+j-k-3] \
+                    and board[k+4,i+j-k-4]:
+                    self.winner = last_player_id
+                    return True
 
         return False
 
