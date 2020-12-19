@@ -1,5 +1,6 @@
 import numpy as np
 from Node import Node
+from board_weight import *
 import random
 import copy
 
@@ -9,20 +10,28 @@ class MentecarloTreeSearch():
         self.root = root  # root node
         self.M = M  # length of the chess bored
         self.mat = mat  # board value  initial_value = np.zeros((M,M))
+        self.Rave = {}
+
+    def board_weight(self, node):
+        t_mat = copy.deepcopy(node.state)
+        row,col = np.where(np.abs(t_mat)==1)
+        r,c = int(np.mean(row)),int(np.mean(col))
+        return gauss_mat[7-r:7-r+self.M,7-c:7-c+self.M]
 
     def expand_node(self, node,expand_node_num):
         t_mat = copy.deepcopy(node.state)
         child_node_player = node.player * (-1)
         row, col = np.where(t_mat == 0)
         child_nd = random.sample(list(range(len(row))), min(expand_node_num - len(node.child), len(row)))
+        gauss = self.board_weight(node)    
         for child in child_nd:
             mat_tmp = copy.deepcopy(node.state)
             mat_tmp[row[child]][col[child]] = child_node_player
+            bw = gauss[row[child]][col[child]]
             action = {'position': [row[child], col[child]],
                       'player': child_node_player
                       }
-            node.child.append(Node(mat_tmp, node, action, child_node_player, False))
-
+            node.child.append(Node(mat_tmp, node, action, child_node_player, False, bw))
 
     def process(self, node):
         if (node.is_root) and (len(node.child) == 0):
@@ -80,7 +89,7 @@ class MentecarloTreeSearch():
                 action = {'position': [row[idx], col[idx]],
                           'player': tmp_player
                           }
-                tmp_node = Node(tmp_mat, node, action, tmp_player, False)
+                tmp_node = Node(tmp_mat, node, action, tmp_player, False, 1)
                 node.child.append(tmp_node)
                 node = tmp_node
 
@@ -89,7 +98,7 @@ class MentecarloTreeSearch():
         best_action = []
         best_child = node.child[0]
         for child_node in node.child:
-            win_rate_tmp = child_node.win_count / child_node.visited_count if child_node.visited_count != 0 else 0
+            win_rate_tmp = child_node.win_count * child_node.board / child_node.visited_count if child_node.visited_count != 0 else 0
             if win_rate_tmp > win_rate:
                 best_action = child_node.action
                 best_child = child_node
@@ -110,7 +119,7 @@ class MentecarloTreeSearch():
         if (node.visited_count == 0) :
             utc_vl = float('inf')
         else:
-            p_a = node.win_count / node.visited_count
+            p_a = node.win_count / node.visited_count * node.board
             p_b = np.sqrt(c * np.log(total_count) / node.visited_count)
             utc_vl = p_a + p_b
 
@@ -179,7 +188,7 @@ if __name__ == '__main__':
     # t_mat[6, 7] = 1
 
     # print(t_mat)
-    node_1 = Node(t_mat, False, False, 1, True)
+    node_1 = Node(t_mat, False, False, 1, True, 1)
     tree = MentecarloTreeSearch(node_1, 8, t_mat)
     a,b=tree.run(node_1)
     # tree.choose_node(node_1)

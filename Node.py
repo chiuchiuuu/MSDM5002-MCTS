@@ -2,7 +2,7 @@ import numpy as np
 
 class Node():
 
-    def __init__(self, state, parent,action,player,is_root):
+    def __init__(self, state, parent,action,player,is_root,board):
         self.visited_count = 0
         self.win_count = 0
         self.state = state
@@ -12,6 +12,7 @@ class Node():
         self.child = []
         self.simulation_count = 0
         self.is_root = is_root
+        self.board = board
 
     def update_node(self,visit_count_update,win_count_update):
 

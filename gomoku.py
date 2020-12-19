@@ -81,11 +81,11 @@ class Gomoku:
                         break
 
                     if run_count == 1:
-                        tmp_node = Node(self.mat, False, False, 1, True)
+                        tmp_node = Node(self.mat, False, False, 1, True, 1)
                         self.MCTS.root = tmp_node
                         self.MCTS.mat = self.mat
                     else:
-                        new_node = Node(self.mat, tmp_node, [row, col], tmp_node.player * (-1), False)
+                        new_node = Node(self.mat, tmp_node, [row, col], tmp_node.player * (-1), False, 1)
                         for child_node in tmp_node.child:
                             if ((row == child_node.action['position'][0]) and (col == child_node.action['position'][1])):
                                 new_node = child_node
