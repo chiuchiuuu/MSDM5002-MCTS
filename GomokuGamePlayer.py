@@ -5,6 +5,7 @@ import random
 import sys
 from MCTS import MonteCarloTreeSearch
 
+from NerualNetwork import *
 
 class GomokuGamePlayer(ABC):
     def __init__(self):
@@ -69,8 +70,8 @@ class MCTSPlayerAlpha(GomokuGamePlayer):
     """
     A player with alphazero version of MCTS
     """
-    def __init__(self, policy_network, n_iter):
-        self.mcts = MonteCarloTreeSearch(n_iter=n_iter, type="alpha", policy_network=policy_network)
+    def __init__(self, policy_network=predict_probs, n_iter=100):
+        self.mcts = MonteCarloTreeSearch(n_iter=n_iter, type="alphazero", policy_network=policy_network)
 
     def get_action(self, state, return_prob=False):
         """

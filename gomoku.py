@@ -2,7 +2,7 @@ import pygame
 import numpy as np
 import random
 from GomokuGameState import GomokuGameState
-from GomokuGamePlayer import MCTSPlayer, HumanPlayer
+from GomokuGamePlayer import MCTSPlayer, HumanPlayer,MCTSPlayerAlpha
 
 class Gomoku:
 
@@ -23,7 +23,7 @@ class Gomoku:
         if self_run:
             players = (MCTSPlayer(max_time=max_time), MCTSPlayer(max_time=max_time))
         else:
-            players = (HumanPlayer(), MCTSPlayer(max_time=max_time))
+            players = (HumanPlayer(), MCTSPlayerAlpha())
 
         self.state = GomokuGameState(self.size, players, start_player=0)
 
@@ -107,6 +107,7 @@ class Gomoku:
             z[np.array(players) != self.state.winner] = -1
         
         return zip(boards, probs, z)
+
 
     def render(self):
         """

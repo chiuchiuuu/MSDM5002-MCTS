@@ -62,6 +62,9 @@ class MonteCarloTreeNode:
         """
         return (self._untried_actions is None) or len(self._untried_actions)
 
+    def is_leaf_alpha(self):
+        return len(self.child)== 0
+
     # def is_terminal_node(self):
     #     """
     #     check if a node is terminal node
@@ -100,7 +103,8 @@ class MonteCarloTreeNode:
         """
         compute uct function of alpha zero
         """
-        return (self.n_win-self.n_lose)/self.n_visit + \
+        _Q = (self.n_win-self.n_lose)/self.n_visit if self.n_visit > 0 else 0
+        return _Q + \
             c_puct * self.prior_prob * np.sqrt(self.parent.n_visit/(1 + self.n_visit))
 
     def backpropagate(self, reward):
@@ -194,7 +198,7 @@ class MonteCarloTreeSearch:
         run a single playout for alphazero mcts
         """
         node = self.root            
-        while not node.is_leaf():
+        while not node.is_leaf_alpha():
             action, node = node.best_child_alpha()
             state.take_action(action)
 
@@ -291,6 +295,7 @@ class MonteCarloTreeSearch:
             action_prob[action] = (action_visit[action]**(1/temp) / sum_visit)
 
         return action_prob
+
 
 if __name__ == "__main__":
     pass
