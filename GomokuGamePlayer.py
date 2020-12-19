@@ -34,6 +34,7 @@ class MCTSPlayer(GomokuGamePlayer):
         self.mcts.update_with_action(state.last_action)
         self.mcts.run(state)
         action = self.mcts.best_action()
+        
         action_prob = self.mcts.get_action_probability()
 
         self.mcts.update_with_action(action)

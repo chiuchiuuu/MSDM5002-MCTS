@@ -146,6 +146,7 @@ class MonteCarloTreeSearch:
             if self.max_time and (time.time() - start_time > self.max_time):
                 print(f"number of iteration: {_}")
                 break
+            
             state_copy = copy.deepcopy(state)
             # get the node to run the simulation
             node = self.select_node(state_copy)

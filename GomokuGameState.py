@@ -37,7 +37,6 @@ class GomokuGameState:
         state_copy._legal_actions = self._legal_actions.copy()
         return state_copy
 
-
     def take_action(self, action):
         """
         take action for current state
@@ -79,6 +78,7 @@ class GomokuGameState:
         board = self.board[last_player_id]
 
         i, j = self.last_action
+        
         # check column
         start, end = max(i-4, 0), min(i, self.size-1-4)
         for k in range(start, end+1):
