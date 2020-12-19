@@ -5,12 +5,13 @@ from GomokuGameState import GomokuGameState
 import copy
 from joblib import Parallel, delayed
 import multiprocessing
+from typing import Dict
 
 class MonteCarloTreeNode:
     """
     
     """
-    def __init__(self, parent):
+    def __init__(self, parent, prior_prob=1):
         """
         initilize for Monte Carlo Tree Node
 
@@ -35,7 +36,7 @@ class MonteCarloTreeNode:
         self.n_lose = 0
         self.n_visit = 0
 
-        self.prior_prob = 0
+        self.prior_prob = prior_prob
 
 
     def expand(self, state):
@@ -110,11 +111,19 @@ class MonteCarloTreeNode:
         if self.parent:
             self.parent.backpropagate(-reward)
 
+    def full_expand(self, action_probs):
+        """
+        fully expand current node, assign all child nodes with a prior probability
+        """
+        for action, prob in action_probs:
+            if action not in self.child:
+                self.child[action] = MonteCarloTreeNode(self, prior_prob=prob)
+
 class MonteCarloTreeSearch:
     """
     
     """
-    def __init__(self, n_iter=20000, parallel=False, max_time=None, type="pure"):
+    def __init__(self, n_iter=20000, parallel=False, max_time=None, type="pure", policy_network=None):
         """
         initialize a Monte Carlo Tree Search Algorithm
 
@@ -130,6 +139,7 @@ class MonteCarloTreeSearch:
         self.max_time = max_time
 
         self.type = type
+        self.policy_network = policy_network
 
 
     def update_with_action(self, action):
@@ -179,43 +189,26 @@ class MonteCarloTreeSearch:
                 state_copy = copy.deepcopy(state)
                 self.playout(state_copy)
                 
-
-                
     def playout(self, state):
         """
         run a single playout for alphazero mcts
         """
-        node = self.root
-        while not state.is_game_over():
-            
-
+        node = self.root            
         while not node.is_leaf():
             action, node = node.best_child_alpha()
             state.take_action(action)
-        
-        if state.is_game_over():
 
+        if not state.is_game_over():
+            action_probs, reward = self.policy_network(state)
+            node.full_expand(action_probs)
+        else:
+            if state.winner is None:
+                reward = 0
+            else:
+                reward = 1 if state.winner == (1-state.current_player_id) else -1
 
+        node.backpropagate(reward)
 
-    def get_action_probability(self, temp=1):
-        """
-        get the probability for each action of self.root
-
-        Parameters:
-        --------
-        temp: float
-            temperature parameters
-        """
-
-        action_visit = {child[0]:child[1].n_visit for child in self.root.child.items()}
-
-        sum_visit = sum([visit**(1/temp) for visit in action_visit.values()])
-
-        action_prob = action_visit.copy()
-        for action in action_visit:
-            action_prob[action] = (action_visit[action]**(1/temp) / sum_visit)
-
-        return action_prob
 
 
     def select_node(self, state):
@@ -274,6 +267,30 @@ class MonteCarloTreeSearch:
         """
         return max(self.root.child.items(), key=lambda child: child[1].n_visit)[0]
 
+
+    def get_action_probability(self, temp=1):
+        """
+        get the probability for each action of self.root
+
+        Parameters:
+        --------
+        temp: float
+            temperature parameters
+
+        Returns:
+        --------
+        action_probs: dict(action, probability)
+        """
+
+        action_visit = {child[0]:child[1].n_visit for child in self.root.child.items()}
+
+        sum_visit = sum([visit**(1/temp) for visit in action_visit.values()])
+
+        action_prob = action_visit.copy()
+        for action in action_visit:
+            action_prob[action] = (action_visit[action]**(1/temp) / sum_visit)
+
+        return action_prob
 
 if __name__ == "__main__":
     pass
