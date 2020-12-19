@@ -37,7 +37,6 @@ class GomokuGameState:
         state_copy._legal_actions = self._legal_actions.copy()
         return state_copy
 
-
     def take_action(self, action):
         """
         take action for current state
@@ -69,6 +68,8 @@ class GomokuGameState:
     def is_game_over(self):
         """
         check if the game is over
+
+        @邱世航
         """
         if len(self._legal_actions) == 0:
             return True
@@ -79,6 +80,7 @@ class GomokuGameState:
         board = self.board[last_player_id]
 
         i, j = self.last_action
+
         # check column
         start, end = max(i-4, 0), min(i, self.size-1-4)
         for k in range(start, end+1):
@@ -177,7 +179,6 @@ class GomokuGameState:
         board[self.board[0]==1] = 'x'
         board[self.board[1]==1] = 'o'
         return board
-
 
     def get_board_under_current_player(self):
         """
