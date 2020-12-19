@@ -21,7 +21,7 @@ class Gomoku:
 
         # init game
         if self_run:
-            players = (MCTSPlayer(max_time=max_time), MCTSPlayer(max_time=max_time))
+            players = (MCTSPlayer(max_time=max_time), MCTSPlayerAlpha())
         else:
             players = (HumanPlayer(), MCTSPlayerAlpha())
 
@@ -164,7 +164,7 @@ class Gomoku:
 
 if __name__ == '__main__':
     # random.seed(0)
-    gomoku = Gomoku(size=8, self_run=False, gui=True, max_time=10)
+    gomoku = Gomoku(size=8, self_run=True, gui=True, max_time=10)
     gomoku.run()
 
     # gomoku = Gomoku(size=6, self_run=True, gui=True, max_time=5)

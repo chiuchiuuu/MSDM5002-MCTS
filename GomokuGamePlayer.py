@@ -70,7 +70,7 @@ class MCTSPlayerAlpha(GomokuGamePlayer):
     """
     A player with alphazero version of MCTS
     """
-    def __init__(self, policy_network=predict_probs, n_iter=100):
+    def __init__(self, policy_network=predict_probs, n_iter=1000):
         self.mcts = MonteCarloTreeSearch(n_iter=n_iter, type="alphazero", policy_network=policy_network)
 
     def get_action(self, state, return_prob=False):
