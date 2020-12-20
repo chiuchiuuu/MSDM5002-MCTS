@@ -3,16 +3,14 @@ import random
 import time
 from GomokuGameState import GomokuGameState
 import copy
-from joblib import Parallel, delayed
-import multiprocessing
 
 class MonteCarloTreeNode:
     """
     
     """
-    def __init__(self, parent):
+    def __init__(self, parent, prior_prob=None):
         """
-        initilize for Monte Carlo Tree Node
+        initilization for Monte Carlo Tree Node
 
         Parameters:
         -----------
@@ -27,6 +25,8 @@ class MonteCarloTreeNode:
 
         self._untried_actions = None
 
+        self.prior_prob = prior_prob
+
 
         # node's statistics
         self.n_win = 0
@@ -35,7 +35,18 @@ class MonteCarloTreeNode:
 
     def expand(self, state):
         """
-        return an unvisited child nodes
+        expand current node
+
+        Parameters:
+        --------
+        state: GomokuGameState
+            the corresponding game state of the node
+
+        Returns:
+        --------
+        action: (int, int)
+            next action
+        child_node: MonteCarloTreeNode
 
         @赵宇恒
         """
@@ -83,7 +94,6 @@ class MonteCarloTreeNode:
 
         @星哲
         """
-        # return self._Q() / self._N() + c_puct * np.sqrt(np.log(self.parent._N()) / self._N())
         return (self.n_win-self.n_lose)/self.n_visit + c_puct * np.sqrt(np.log(self.parent.n_visit) / self.n_visit)
 
     def backpropagate(self, reward):
@@ -97,22 +107,42 @@ class MonteCarloTreeNode:
         if self.parent:
             self.parent.backpropagate(-reward)
 
+    def is_leaf_alpha(self):
+        """@邱世航"""
+        return len(self.child)== 0
+
+    def best_child_alpha(self):
+        """@邱世航"""
+        return max(self.child.items(), key = lambda child: child[1].uct_alpha())
+
+    def uct_alpha(self, c_puct=5):
+        """@邱世航"""
+        _Q = (self.n_win-self.n_lose)/self.n_visit if self.n_visit > 0 else 0
+        return _Q + \
+            c_puct * self.prior_prob * np.sqrt(self.parent.n_visit)/(1 + self.n_visit)
+
+    def expand_alpha(self, action_probs):
+        """@邱世航"""
+        for action, prob in action_probs:
+            if action not in self.child:
+                self.child[action] = MonteCarloTreeNode(self, prior_prob=prob)
+
 class MonteCarloTreeSearch:
     """
     """
-    def __init__(self, n_iter=20000, parallel=False, max_time=None):
+    def __init__(self, n_iter=20000, max_time=None):
         """
         initialize a Monte Carlo Tree Search Algorithm
 
         Parameters:
         -----------
-        node: MonteCarloTreeNode
-            the root node of the MCTS
+        n_iter: int
+            maximum number of iteration
+        max_time: int
+            maximum time of simulation
         """
-
         self.n_iter = n_iter
         self.root = MonteCarloTreeNode(None)
-        self.parallel = parallel
         self.max_time = max_time
 
     def update_with_action(self, action):
@@ -133,20 +163,12 @@ class MonteCarloTreeSearch:
             self.root.child[action] = tmp
             self.root = tmp
 
-    def run(self, state: GomokuGameState):
+    def run(self, state):
         """
-        run MCTS algorithm
+        run MCTS algorithm on given state
 
-        Parameters:
-        --------
         @邱世航
         """
-        # run simulations
-        #if self.parallel:
-        #    num_cores = multiprocessing.cpu_count()
-        #    Parallel(n_jobs=num_cores)(delayed(self._single_run)(state) for _ in range(self.n_iter-10))
-        #else:
-
         start_time = time.time()
         for _ in range(self.n_iter):
             if self.max_time and (time.time() - start_time > self.max_time):
@@ -159,6 +181,91 @@ class MonteCarloTreeSearch:
             reward = self.simulate(state_copy)
             node.backpropagate(reward)
 
+    
+
+    def select_node(self, state):
+        """
+        select a leaf node for the simulation
+
+        @星哲
+        """
+        current_node = self.root
+        while not current_node.is_leaf():
+            action, current_node = current_node.best_child()
+            state.take_action(action)
+
+        if state.is_game_over():
+            return current_node
+        else:
+            action, node = current_node.expand(state)
+            state.take_action(action)
+            return node
+
+    def simulate(self, state):
+        """
+        run single simulation (from node to terminal)
+
+        @凯方
+        """
+        player_id = 1 - state.current_player_id
+        while not state.is_game_over():
+            actions = state.get_legal_action()
+
+            # random 
+            action = random.choice(actions)
+            state.take_action(action)
+
+        if state.winner is None:
+            #print("simulation: draw")
+            return 0
+        else:
+            #print(f"simulation: {state.winner} wins")
+            return 1 if state.winner == player_id else -1
+
+    def best_action(self):
+        """
+        Get the best action
+
+        best action is the action of most visited child node
+
+        @兰兰
+        """
+        return max(self.root.child.items(), key=lambda child: child[1].n_visit)[0]
+
+
+    def run_alpha(self, state, policy_func):
+        """@邱世航"""
+        self.policy_func = policy_func
+        start_time = time.time()
+        for _ in range(self.n_iter):
+            if self.max_time and (time.time() - start_time > self.max_time):
+                print(f"number of playout: {_}")
+                break
+            state_copy = copy.deepcopy(state)
+            self.playout(state_copy)
+
+    def playout(self, state):
+        """
+        run a single playout for alphazero mcts
+        @邱世航
+        """
+        node = self.root            
+        while not node.is_leaf_alpha():
+            action, node = node.best_child_alpha()
+            state.take_action(action)
+
+        if not state.is_game_over():
+            action_probs, reward = self.policy_func(state)
+            node.expand_alpha(action_probs)
+        else:
+            if state.winner is None:
+                reward = 0
+            else:
+                reward = 1 if state.winner == (1-state.current_player_id) else -1
+
+        node.backpropagate(reward)
+
+    
     def get_action_probability(self, temp=1):
         """
         get the probability for each action of self.root
@@ -179,68 +286,3 @@ class MonteCarloTreeSearch:
 
         return action_prob
 
-    def select_node(self, state):
-        """
-        select a leaf node for the simulation
-
-        @星哲
-        """
-        current_node = self.root
-        while not current_node.is_leaf():
-            action, current_node = current_node.best_child()
-            state.take_action(action)
-
-        if state.is_game_over():
-            return current_node
-        else:
-            action, node = current_node.expand(state)
-            state.take_action(action)
-            return node
-
-        # while not state.is_game_over():
-        #     if current_node.is_leaf():
-        #         action, node = current_node.expand(state)
-        #         state.take_action(action)
-        #         return node
-        #     else:
-        #         action, node = current_node.best_child()
-        #         state.take_action(action)
-        #         current_node = node
-
-        # return current_node
-
-    def simulate(self, state):
-        """
-        run single simulation (from node to terminal)
-
-        @凯方
-        """
-        player_id = 1 - state.current_player_id
-        while not state.is_game_over():
-            actions = state.get_legal_action()
-            
-            # random 
-            action = random.choice(actions)
-            state.take_action(action)
-
-        # if not state.winner
-        if state.winner is None:
-            #print("simulation: draw")
-            return 0
-        else:
-            #print(f"simulation: {state.winner} wins")
-            return 1 if state.winner == player_id else -1
-
-    def best_action(self):
-        """
-        Get the best action
-
-        best action is the action of most visited child node
-
-        @兰兰
-        """
-        return max(self.root.child.items(), key=lambda child: child[1].n_visit)[0]
-
-
-if __name__ == "__main__":
-    pass

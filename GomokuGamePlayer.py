@@ -14,16 +14,26 @@ class GomokuGamePlayer(ABC):
     def get_action(self, state):
         """
         get the player's action for current state
+
+        Parameters
+        --------
+        sate: GomokuGameState
+            current state of the game
+        
+        Returns
+        --------
+        action: (int, int)
+            location to move
         """
         pass
 
 class MCTSPlayer(GomokuGamePlayer):
-    def __init__(self, n_iter=20000, parallel=False, max_time=None):
+    def __init__(self, n_iter=20000, max_time=None):
         super().__init__()
-        self.mcts = MonteCarloTreeSearch(n_iter=n_iter, parallel=parallel, max_time=max_time)
+        self.mcts = MonteCarloTreeSearch(n_iter=n_iter, max_time=max_time)
         self.tree = self.mcts.root
         
-    def get_action(self, state, return_prob=False):
+    def get_action(self, state):
         """
         Return an action for the current state
         """
@@ -32,17 +42,13 @@ class MCTSPlayer(GomokuGamePlayer):
         # return tuple(random.choice(actions))
 
         self.mcts.update_with_action(state.last_action)
+
         self.mcts.run(state)
         action = self.mcts.best_action()
-        
-        action_prob = self.mcts.get_action_probability()
 
         self.mcts.update_with_action(action)
 
-        if return_prob:
-            return action, action_prob
-        else:
-            return action
+        return action
 
 class HumanPlayer(GomokuGamePlayer):
     def __init__(self):
@@ -64,3 +70,31 @@ class HumanPlayer(GomokuGamePlayer):
 
                     if state.is_legal_action(action):
                         return action
+
+class MCTSPlayerAlpha(GomokuGamePlayer):
+    """
+    A player with alphazero version of MCTS
+    """
+    def __init__(self, policy_func, n_iter=20000,max_time=None):
+        self.policy_func = policy_func
+        self.mcts = MonteCarloTreeSearch(n_iter=n_iter,max_time=max_time)
+
+    def get_action(self, state, return_prob=False):
+        """
+        Return an action for the current state
+        """
+        # random action
+        # actions = state.get_legal_action()
+        # return tuple(random.choice(actions))
+
+        self.mcts.update_with_action(state.last_action)
+        self.mcts.run_alpha(state, self.policy_func)
+
+        action_prob = self.mcts.get_action_probability()
+        action = max(action_prob.items(), key = lambda x: x[1])[0]
+        self.mcts.update_with_action(action)
+
+        if return_prob:
+            return action, action_prob
+        else:
+            return action
