@@ -170,6 +170,7 @@ class MonteCarloTreeSearch:
         @邱世航
         """
         start_time = time.time()
+        n_draw = 0
         for _ in range(self.n_iter):
             if self.max_time and (time.time() - start_time > self.max_time):
                 print(f"number of iteration: {_}")
@@ -180,6 +181,7 @@ class MonteCarloTreeSearch:
             node = self.select_node(state_copy)
             reward = self.simulate(state_copy)
             node.backpropagate(reward)
+            n_draw += (reward==0)
 
     
 
