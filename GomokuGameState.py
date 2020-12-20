@@ -183,6 +183,7 @@ class GomokuGameState:
         a, b = self.current_player_id, 1 - self.current_player_id
         board_cp = np.zeros((4,self.size,self.size))
         board_cp[:2,:,:] = self.board[[a,b],:,:].copy()
-        board_cp[2, self.last_action[0], self.last_action[1]] = 1
+        if self.last_action:
+            board_cp[2, self.last_action[0], self.last_action[1]] = 1
         board_cp[3] = (self.current_player_id == 0)
         return board_cp

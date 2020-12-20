@@ -93,6 +93,8 @@ class Gomoku:
             self.state.take_action(action)
 
             if self.gui:
+                for event in pygame.event.get():
+                    pass
                 self.render()
 
         z = np.zeros(len(players))
@@ -163,16 +165,17 @@ if __name__ == '__main__':
     # gomoku = Gomoku(8, HumanPlayer(), MCTSPlayer(max_time=10), gui=True)
     # gomoku.run()
 
-    # gomoku = Gomoku(size=6, self_run=True, gui=True, max_time=5)
-    # results = gomoku.run_self_play()
+    # gomoku = Gomoku(4, MCTSPlayer(max_time=5),MCTSPlayer(max_time=5), gui=True)
+    # results = gomoku.collect_play_data()
     # results = list(results)
     # for board, prob, z in results:
     #     print(z)
+
     from PolicyValueNet import PolicyValueNetNumpy
     import pickle
 
     net_param = pickle.load(open('zyh_8_8_5.model', 'rb', ), encoding='bytes')
     policy_value_fn = PolicyValueNetNumpy(8, 8, net_param).policy_value_fn
 
-    gomoku = Gomoku(8, MCTSPlayer(max_time=10), MCTSPlayerAlpha(policy_value_fn,max_time=10))
+    gomoku = Gomoku(8, HumanPlayer(), MCTSPlayerAlpha(policy_value_fn,max_time=10))
     gomoku.run()
