@@ -2,11 +2,11 @@ import pygame
 import numpy as np
 import random
 from GomokuGameState import GomokuGameState
-from GomokuGamePlayer import MCTSPlayer, HumanPlayer
+from GomokuGamePlayer import MCTSPlayer, HumanPlayer, MCTSPlayerAlpha
 
 class Gomoku:
 
-    def __init__(self, size, self_run=False, gui=True, n_iter=500, max_time=10):
+    def __init__(self, size, player1, player2, gui=True):
         """
         initilize gomuku game
 
@@ -14,18 +14,14 @@ class Gomoku:
         -----------
         size: int
             size of the board
+        player1, player2: GomokuGamePlayer
+            the two players of the Gomoku game
+        gui: bool
+            True if you want a graphical user interface
         """
         self.size = size
-        self.self_run = self_run
         self.gui = gui
-
-        # init game
-        if self_run:
-            players = (MCTSPlayer(max_time=max_time), MCTSPlayer(max_time=max_time))
-        else:
-            players = (HumanPlayer(), MCTSPlayer(max_time=max_time))
-
-        self.state = GomokuGameState(self.size, players, start_player=0)
+        self.state = GomokuGameState(self.size, (player1, player2), start_player=0)
 
         if gui:
             # pygame
@@ -41,7 +37,6 @@ class Gomoku:
         """
         while not self.state.is_game_over():
             player = self.state.get_current_player()
-
             action = player.get_action(self.state)
             self.state.take_action(action)
 
@@ -53,7 +48,6 @@ class Gomoku:
                 self.render()
 
         ## handling game end
-        
         if self.state.winner is not None:
             message = f"Player {self.state.winner} wins!"
         else:
@@ -75,9 +69,9 @@ class Gomoku:
             print(message)
 
 
-    def run_self_play(self):
+    def collect_play_data(self):
         """
-        run self-play and get self-play data
+        run and collect data
         """
         boards = []
         players = []
@@ -166,12 +160,19 @@ class Gomoku:
                     pygame.draw.circle(self.screen, white_color, pos, 18,0)
 
 if __name__ == '__main__':
-    # random.seed(0)
-    gomoku = Gomoku(size=8, self_run=False, gui=True, max_time=10)
-    gomoku.run()
+    # gomoku = Gomoku(8, HumanPlayer(), MCTSPlayer(max_time=10), gui=True)
+    # gomoku.run()
 
     # gomoku = Gomoku(size=6, self_run=True, gui=True, max_time=5)
     # results = gomoku.run_self_play()
     # results = list(results)
     # for board, prob, z in results:
     #     print(z)
+    from PolicyValueNet import PolicyValueNetNumpy
+    import pickle
+
+    net_param = pickle.load(open('zyh_8_8_5.model', 'rb', ), encoding='bytes')
+    policy_value_fn = PolicyValueNetNumpy(8, 8, net_param).policy_value_fn
+
+    gomoku = Gomoku(8, MCTSPlayer(max_time=10), MCTSPlayerAlpha(policy_value_fn,max_time=10))
+    gomoku.run()
