@@ -28,9 +28,6 @@ class MonteCarloTreeNode:
 
         self._untried_actions = None
 
-        
-
-
         # node's statistics
         self.n_win = 0
         self.n_lose = 0
@@ -65,10 +62,6 @@ class MonteCarloTreeNode:
     def is_leaf_alpha(self):
         return len(self.child)== 0
 
-    # def is_terminal_node(self):
-    #     """
-    #     check if a node is terminal node
-    #     """
 
     def best_child(self):
         """
@@ -99,7 +92,7 @@ class MonteCarloTreeNode:
         # return self._Q() / self._N() + c_puct * np.sqrt(np.log(self.parent._N()) / self._N())
         return (self.n_win-self.n_lose)/self.n_visit + c_puct * np.sqrt(np.log(self.parent.n_visit) / self.n_visit)
 
-    def uct_alpha(self, c_puct=np.sqrt(2)):
+    def uct_alpha(self, c_puct=5):
         """
         compute uct function of alpha zero
         """
@@ -209,7 +202,7 @@ class MonteCarloTreeSearch:
             if state.winner is None:
                 reward = 0
             else:
-                reward = 1 if state.winner == (1-state.current_player_id) else -1
+                reward = 1 if state.winner == state.current_player_id else -1
 
         node.backpropagate(reward)
 
@@ -250,7 +243,7 @@ class MonteCarloTreeSearch:
         player_id = 1 - state.current_player_id
         while not state.is_game_over():
             actions = state.get_legal_action()
-            
+
             # random 
             action = random.choice(actions)
             state.take_action(action)

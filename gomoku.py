@@ -3,6 +3,9 @@ import numpy as np
 import random
 from GomokuGameState import GomokuGameState
 from GomokuGamePlayer import MCTSPlayer, HumanPlayer,MCTSPlayerAlpha
+from PolicyValue import PolicyValueNetNumpy
+#from NerualNetwork import *
+import pickle
 
 class Gomoku:
 
@@ -19,11 +22,14 @@ class Gomoku:
         self.self_run = self_run
         self.gui = gui
 
+        net_param = pickle.load(open('zyh_8_8_5.model', 'rb', ), encoding='bytes')
+        policy_value_fn = PolicyValueNetNumpy(self.size, self.size, net_param).policy_value_fn
+        
         # init game
         if self_run:
             players = (MCTSPlayer(max_time=max_time), MCTSPlayer(max_time=max_time))
         else:
-            players = (HumanPlayer(), MCTSPlayerAlpha())
+            players = (HumanPlayer(), MCTSPlayerAlpha(policy_network=policy_value_fn))
 
         self.state = GomokuGameState(self.size, players, start_player=0)
 
