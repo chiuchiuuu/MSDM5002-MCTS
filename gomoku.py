@@ -177,5 +177,5 @@ if __name__ == '__main__':
     net_param = pickle.load(open('zyh_8_8_5.model', 'rb', ), encoding='bytes')
     policy_value_fn = PolicyValueNetNumpy(8, 8, net_param).policy_value_fn
 
-    gomoku = Gomoku(8, HumanPlayer(), MCTSPlayerAlpha(policy_value_fn,max_time=10))
+    gomoku = Gomoku(8, HumanPlayer(), MCTSPlayer(max_time=10))
     gomoku.run()

@@ -1,18 +1,19 @@
 # MSDM5002-MCTS
-## Environment
 
-### Tools
+An gomoku AI using MCTS algorithm.
 
-- [GitHub Desktop | Simple collaboration from your desktop](https://desktop.github.com/)
-- [Visual Studio Code - Code Editing. Redefined](https://code.visualstudio.com/)
+## How to run
 
-### Packages
 
-[pygame](https://www.pygame.org/)
+```shell
+python gomoku.py
+```
+
+parameters:
 
 ```python
-pip install pygame
-
-# for mainland china
-pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pygame
+# human vs MCTS
+gomoku  = Gomoku(8, HumanPlayer(), MCTSPlayer(max_time=10))
+# human vs MCTS with policy network
+gomoku = Gomoku(8, HumanPlayer(), MCTSPlayerAlpha(policy_value_fn,max_time=10))
 ```
